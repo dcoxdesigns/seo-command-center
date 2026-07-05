@@ -1,0 +1,9 @@
+{
+  "meta": { "success": true, "note": "Synthetic sample for example.com. Note the Gemini / Google skew — Semrush under-reports ChatGPT and does not cover Perplexity or Copilot." },
+  "data": [
+    { "prompt": "best project management software", "topic": "Project Management Software", "topic_id": "t1", "engine": "gemini", "mentions": 2, "cited_pages": 1 },
+    { "prompt": "tools for remote teams", "topic": "Remote Work Best Practices", "topic_id": "t3", "engine": "gemini", "mentions": 2, "cited_pages": 1 },
+    { "prompt": "what is example.com", "topic": "Example.com Reviews", "topic_id": "t4", "engine": "google_ai_mode", "mentions": 2, "cited_pages": 3 },
+    { "prompt": "team collaboration tools comparison", "topic": "Team Collaboration Tools", "topic_id": "t2", "engine": "gemini", "mentions": 1, "cited_pages": 1 }
+  ]
+}

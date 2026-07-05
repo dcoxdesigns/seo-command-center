@@ -1,0 +1,9 @@
+{
+  "meta": { "success": true, "note": "Synthetic sample for example.com. Replace by running fetchers/semrush-ai-visibility.py against your own domain." },
+  "data": {
+    "visibility": 24,
+    "audience": 812400,
+    "mentions": { "all": 40, "chatgpt": 5, "gemini": 14, "google_ai_mode": 8, "google_ai_overview": 13 },
+    "cited_pages": { "all": 90, "chatgpt": 30, "gemini": 10, "google_ai_mode": 25, "google_ai_overview": 25 }
+  }
+}

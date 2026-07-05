@@ -1,0 +1,23 @@
+# Keep real client data out of the demo repo — sample/* files are the exceptions
+data/**/*.csv
+data/**/*.json
+data/**/*.xlsx
+!data/**/sample-*.csv
+!data/**/sample-*.json
+
+# Real client configs (the .example file is tracked)
+config/*.yml
+config/*.yaml
+!config/*.example.yml
+
+# Generated reports (client-named)
+reports/*.md
+!reports/.gitkeep
+
+# Local env / secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store

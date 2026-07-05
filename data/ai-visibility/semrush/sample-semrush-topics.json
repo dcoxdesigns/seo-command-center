@@ -1,0 +1,9 @@
+{
+  "meta": { "success": true, "note": "Synthetic sample for example.com." },
+  "data": [
+    { "topic": "Project Management Software", "topic_id": "t1", "topic_volume": 901000, "responses": 60, "mentions": 2, "cited_pages": 1 },
+    { "topic": "Team Collaboration Tools", "topic_id": "t2", "topic_volume": 60500, "responses": 30, "mentions": 5, "cited_pages": 3 },
+    { "topic": "Remote Work Best Practices", "topic_id": "t3", "topic_volume": 22000, "responses": 12, "mentions": 3, "cited_pages": 2 },
+    { "topic": "Example.com Reviews", "topic_id": "t4", "topic_volume": 40, "responses": 18, "mentions": 9, "cited_pages": 18 }
+  ]
+}

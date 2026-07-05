@@ -1,0 +1,9 @@
+{
+  "meta": { "success": true, "note": "Synthetic sample for example.com." },
+  "data": [
+    { "page_url": "https://example.com/blog/remote-team-guide", "responses": 14 },
+    { "page_url": "https://example.com", "responses": 9 },
+    { "page_url": "https://example.com/features", "responses": 7 },
+    { "page_url": "https://example.com/blog/pm-software-comparison", "responses": 5 }
+  ]
+}

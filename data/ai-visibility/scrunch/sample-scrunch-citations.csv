@@ -1,0 +1,13 @@
+query,engine,cited,citing_url,position
+project management software,chatgpt,no,,
+project management software,perplexity,no,,
+project management software,gemini,yes,/blog/pm-software-comparison,5
+team collaboration tools,chatgpt,yes,/features,3
+team collaboration tools,perplexity,yes,/blog/remote-team-guide,2
+remote team guide,chatgpt,yes,/blog/remote-team-guide,1
+remote team guide,perplexity,yes,/blog/remote-team-guide,1
+remote team guide,copilot,yes,/blog/remote-team-guide,4
+best pm software for startups,chatgpt,yes,/features,2
+best pm software for startups,copilot,no,,
+example.com reviews,perplexity,yes,/,1
+example.com reviews,copilot,yes,/,2
