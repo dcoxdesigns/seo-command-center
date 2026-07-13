@@ -14,6 +14,14 @@ config/*.yaml
 reports/*.md
 !reports/.gitkeep
 
+# Real per-client folders (data/reports/client-facts) — _template is the tracked scaffold
+clients/*/
+!clients/_template/
+!clients/_template/**
+
+# Business info (pricing, contracts) — private, never belongs in this public demo repo
+business/
+
 # Local env / secrets
 .env
 .env.*

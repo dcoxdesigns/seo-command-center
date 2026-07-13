@@ -1,0 +1,8 @@
+Address,Status Code,Indexability,Title 1,Meta Description 1,H1-1,Word Count,Canonical Link Element 1
+https://example.com/,200,Indexable,Example Co — AI SEO Tools,Get found by ChatGPT and Google AI.,AI SEO Tools for Modern Brands,540,https://example.com/
+https://example.com/pricing,200,Indexable,Pricing,,Pricing,180,https://example.com/pricing
+https://example.com/blog/geo-vs-seo,200,Indexable,GEO vs SEO,,GEO vs SEO,910,https://example.com/blog/geo-vs-seo
+https://example.com/blog/geo-vs-seo-2024,200,Indexable,GEO vs SEO,,GEO vs SEO,890,https://example.com/blog/geo-vs-seo
+https://example.com/old-product,404,Non-Indexable: 404,,,,0,
+https://example.com/legacy-landing,200,Non-Indexable: Canonicalised,Legacy Landing Page,,Legacy Landing,210,https://example.com/
+https://example.com/blog/schema-markup,200,Indexable,Schema Markup for AI Search,,Schema Markup for AI Search,60,https://example.com/blog/schema-markup

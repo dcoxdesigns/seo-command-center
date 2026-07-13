@@ -1,0 +1,6 @@
+Source,Destination,Anchor Text,Follow
+https://example.com/,https://example.com/pricing,Pricing,TRUE
+https://example.com/,https://example.com/blog/geo-vs-seo,GEO vs SEO,TRUE
+https://example.com/pricing,https://example.com/,Home,TRUE
+https://example.com/blog/geo-vs-seo,https://example.com/,Home,TRUE
+https://example.com/blog/geo-vs-seo-2024,https://example.com/,Home,TRUE

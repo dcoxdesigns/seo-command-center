@@ -12,3 +12,7 @@ API notes worth knowing for the demo:
 - **GSC** and **GA4** have official APIs (OAuth / service account).
 - **Google Ads** API needs a developer token; the search-terms CSV export is the fast path.
 - **AI visibility** — Scrunch, Semrush AI Visibility, and Otterly export CSV/JSON. Bing Webmaster Tools is the only first-party AI-citation source (Copilot/Bing), CSV export, no API yet.
+- **Site crawl** (step 1/3 of `config/nine-step-workflow.md`) is export-only, no fetcher —
+  Screaming Frog (or equivalent) exports `Internal All` and `All Inlinks` CSVs into
+  `data/crawl/`. Screaming Frog does have a CLI for scheduled/headless crawls if that's
+  ever worth automating, but there's no API to pull results remotely.

@@ -12,20 +12,26 @@ git clone https://github.com/willscott-v2/seo-command-center.git
 cd seo-command-center
 ```
 
-Then open the folder in Claude Code (or Cursor, Codex, Antigravity, Copilot — it ships an `AGENTS.md` they all read), copy `config/client.example.yml` to a real config, drop your CSV exports into `data/`, and ask away. Sample data ships so it works offline before you connect anything.
+Then open the folder in Claude Code (or Cursor, Codex, Antigravity, Copilot — it ships an `AGENTS.md` they all read), copy `clients/_template/` to `clients/<your-client>/`, fill in `client-facts.md`, and drop your CSV exports into that client's `data/`. Sample data ships in the legacy top-level `data/` so it works offline before you connect anything.
 
 ## Structure
 
 ```
-config/            one file per client/site (config/client.example.yml to copy)
-data/              performance exports — read-only inputs
-  gsc/  ga4/  ads/  ai-visibility/  exports/
-fetchers/          optional API-pull scripts (CSV path works without these)
-prompts/           reusable named analysis prompts
-reports/           deliverables land here, dated + client-named
-qa/                verification checklists — run before a report is "done"
-AGENTS.md          the agent contract (works in Claude Code, Cursor, Antigravity, Copilot, Codex)
-CLAUDE.md          pointer to AGENTS.md for Claude Code
+clients/<name>/     per-client workspace (copy clients/_template/ to start one)
+  client-facts.md      domain, goals, brand terms, competitors, notes
+  data/                that client's performance exports — read-only inputs
+  reports/             that client's deliverables, dated
+config/             legacy: one file per client/site (config/client.example.yml to copy)
+  nine-step-workflow.md   the operational SOP every engagement runs through
+  five-lever-framework.md the scoring standard applied per page (step 5)
+data/               legacy: shared performance exports — read-only inputs
+  gsc/  ga4/  ads/  ai-visibility/  crawl/  exports/
+fetchers/           optional API-pull scripts (CSV path works without these), shared across clients
+prompts/            reusable named analysis prompts, shared across clients
+reports/            legacy: shared deliverables, dated + client-named
+qa/                 verification checklists, shared across clients — run before a report is "done"
+AGENTS.md           the agent contract (works in Claude Code, Cursor, Antigravity, Copilot, Codex)
+CLAUDE.md           pointer to AGENTS.md for Claude Code
 ```
 
 ## Running the demo

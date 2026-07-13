@@ -6,14 +6,24 @@ You are an SEO operations assistant working inside this project. Everything you 
 
 A repeatable workspace for running SEO analysis end to end: pull or import performance data, ask cross-source questions, turn findings into briefs and recommendations, and repurpose the work into distribution assets — with a human verifying before anything goes to a client.
 
+Every engagement runs through the same nine-step workflow — see
+`config/nine-step-workflow.md` for the full breakdown of each step, which repo asset
+implements it, and how often it repeats.
+
 ## Folder map
 
-- `config/` — one file per client/site. Domain, goals, target queries, brand terms, competitors. Read the relevant config at the start of any task.
-- `data/` — performance exports, one subfolder per source: `gsc/`, `ga4/`, `ads/`, `ai-visibility/`, plus a catch-all `exports/`. Treat as read-only inputs.
-- `fetchers/` — optional scripts that pull data via API. If a fetcher exists, prefer it; if not, work from the CSVs in `data/`.
-- `prompts/` — reusable, named analysis prompts. Reuse these instead of improvising the same request twice.
-- `reports/` — your output. Dated, client-named markdown. This is where deliverables land.
-- `qa/` — verification checklists. Run the relevant one before calling any report finished.
+- `clients/<client-name>/` — new convention for per-client work. Copy `clients/_template/` to start a client. Contains:
+  - `client-facts.md` — domain, goals, target queries, brand terms, competitors. Read this at the start of any task for that client.
+  - `data/` — that client's performance exports. Treat as read-only inputs.
+  - `reports/` — that client's dated deliverables. This is where output lands.
+- `config/`, top-level `data/`, top-level `reports/` — legacy/demo structure (one config file per client, shared data subfolders by source, shared reports folder). Still valid for the sample data shipped in this repo; new clients should use `clients/<client-name>/` instead.
+  - `config/nine-step-workflow.md` — the operational SOP: what happens at each of the nine
+    steps, across all five phases (Audit, Structure, Create, Measure, Repeat).
+  - `config/five-lever-framework.md` — the scoring standard applied in step 5.
+- `fetchers/` — optional scripts that pull data via API. Shared across clients. If a fetcher exists, prefer it; if not, work from the CSVs in the client's `data/`.
+- `prompts/` — reusable, named analysis prompts. Shared across clients. Reuse these instead of improvising the same request twice.
+- `qa/` — verification checklists. Shared across clients. Run the relevant one before calling any report finished.
+- `business/` — Small Factory 5's own pricing and contract info (`pricing.md`, `contracts.md`). Private, gitignored — never committed. Read these whenever scoping, quoting, or describing what an engagement includes.
 
 ## How to work
 
@@ -23,6 +33,7 @@ A repeatable workspace for running SEO analysis end to end: pull or import perfo
 4. **Separate findings from recommendations.** Reports lead with what the data shows, then what to do about it, then required actions in priority order.
 5. **Trust but verify.** Before a report is "done," run `qa/report-checklist.md`. Flag any number you couldn't tie back to a source as needs-human-review rather than stating it as fact.
 6. **Never invent client data.** If a file is missing or a date range isn't covered, say so. Don't fill the gap with plausible numbers.
+7. **Scope work against `business/pricing.md` and `business/contracts.md`.** Whenever a task involves scoping an engagement, quoting a price, or describing what's included/excluded, read those files first rather than guessing — flag as needs-human-review if the files don't cover the situation.
 
 ## Guardrails
 
