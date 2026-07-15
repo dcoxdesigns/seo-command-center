@@ -19,7 +19,21 @@ checklist before it ships.
 ## Phase 1 — Audit
 *Where every engagement starts. Establishes the baseline everything else is measured against.*
 
-### Step 1 — Full-Site Crawl & Technical Baseline
+### Step 1A — AI Visibility Grader Snapshot
+- **Objective:** A fast, single-input gut-check on the client's current AI visibility before
+  the full audit begins — something to anchor the later, more detailed step 2 analysis
+  against.
+- **Inputs:** The client's domain (`clients/<client>/client-facts.md`).
+- **Repo assets:** None — this is a manual step in an external tool, not repo automation.
+  Go to [ai.grader.searchinfluence.com](https://ai.grader.searchinfluence.com) and enter the
+  client's web address.
+- **Output:** Whatever the grader returns (score/grade/summary). Save a screenshot or export
+  into `clients/<client>/data/ai-visibility/` so it's available as a reference point when
+  step 2 runs.
+- **Cadence:** Once, at engagement kickoff — before step 1B.
+- **Status:** Manual/external only. No fetcher or in-repo tooling for this step.
+
+### Step 1B — Full-Site Crawl & Technical Baseline
 - **Objective:** Map what's actually on the site before touching content — crawlability,
   indexation, page inventory, technical baseline.
 - **Inputs:** The client's domain (`clients/<client>/client-facts.md`) and a crawl export.
@@ -56,12 +70,12 @@ checklist before it ships.
 - **Objective:** Map how pages should connect. Isolated pages with no internal links read
   as low-authority to search engines and AI systems alike.
 - **Repo assets:** `prompts/internal-linking-map.md`, run against the same
-  `internal_all.csv` / `all_inlinks.csv` exports used in step 1 (this workflow depends on
-  step 1 having already run).
+  `internal_all.csv` / `all_inlinks.csv` exports used in step 1B (this workflow depends on
+  step 1B having already run).
 - **Output:** A linking map / IA recommendation, saved to `clients/<client>/reports/`.
 - **Cadence:** Once, early — revisit if step 6 (content gap fill) adds enough new pages to
   change the structure.
-- **Status:** Built (depends on step 1's crawl export).
+- **Status:** Built (depends on step 1B's crawl export).
 
 ### Step 4 — Schema & Structured Data Plan
 - **Objective:** Identify missing structured data (Organization, Product, FAQ, Article) and
@@ -171,10 +185,12 @@ informally (read the page and the client-facts, don't assume a full crawl happen
 
 ## Gaps — not yet built
 Honest state as of this writing, so nobody assumes automation that isn't there:
-- **Step 1** still has no in-repo crawler — it reads a Screaming Frog (or equivalent)
+- **Step 1A** is entirely manual — a browser visit to an external grader tool, no repo
+  fetcher or saved-API integration for it.
+- **Step 1B** still has no in-repo crawler — it reads a Screaming Frog (or equivalent)
   export rather than pulling one itself. A Screaming Frog license (paid tier) is needed for
   crawls over 500 URLs; the free tier works for smaller sites.
-- **Steps 1 and 3** both key off crawler export column names (`Internal All`,
+- **Steps 1B and 3** both key off crawler export column names (`Internal All`,
   `All Inlinks`). If the crawl tool changes (different tool than Screaming Frog, or a
   future Screaming Frog export schema change), re-check the column names the prompts
   reference still match.

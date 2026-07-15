@@ -20,6 +20,10 @@ implements it, and how often it repeats.
   - `config/nine-step-workflow.md` — the operational SOP: what happens at each of the nine
     steps, across all five phases (Audit, Structure, Create, Measure, Repeat).
   - `config/five-lever-framework.md` — the scoring standard applied in step 5.
+  - `config/methodology.md` — the long-form explanation of both: why each lever and step
+    exists, and the detailed process behind it. Read this for training/onboarding or when
+    a client asks for the full process explanation; use the two files above for the
+    day-to-day quick reference.
 - `fetchers/` — optional scripts that pull data via API. Shared across clients. If a fetcher exists, prefer it; if not, work from the CSVs in the client's `data/`.
 - `prompts/` — reusable, named analysis prompts. Shared across clients. Reuse these instead of improvising the same request twice.
 - `qa/` — verification checklists. Shared across clients. Run the relevant one before calling any report finished.

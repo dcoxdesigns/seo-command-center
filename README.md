@@ -24,6 +24,7 @@ clients/<name>/     per-client workspace (copy clients/_template/ to start one)
 config/             legacy: one file per client/site (config/client.example.yml to copy)
   nine-step-workflow.md   the operational SOP every engagement runs through
   five-lever-framework.md the scoring standard applied per page (step 5)
+  methodology.md          long-form explanation of both, for training/client walkthroughs
 data/               legacy: shared performance exports — read-only inputs
   gsc/  ga4/  ads/  ai-visibility/  crawl/  exports/
 fetchers/           optional API-pull scripts (CSV path works without these), shared across clients
