@@ -25,6 +25,8 @@ config/             legacy: one file per client/site (config/client.example.yml 
   nine-step-workflow.md   the operational SOP every engagement runs through
   five-lever-framework.md the scoring standard applied per page (step 5)
   methodology.md          long-form explanation of both, for training/client walkthroughs
+  brand-voice.md          how SF5 sounds in writing
+  deck-style-guide.md     how SF5 looks in a slide deck (the visual counterpart to brand-voice.md)
 data/               legacy: shared performance exports — read-only inputs
   gsc/  ga4/  ads/  ai-visibility/  crawl/  exports/
 fetchers/           optional API-pull scripts (CSV path works without these), shared across clients
