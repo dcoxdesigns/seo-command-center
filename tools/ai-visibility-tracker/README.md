@@ -2,9 +2,11 @@
 
 Internal tool — tracks whether SF5 client brands/domains get mentioned or
 cited in AI-generated answers across ChatGPT, Perplexity, and Gemini.
-Supplements manual spot-checking and Otterly.ai for SF5's own client
-tracking. Not a client-facing product. No third-party Python packages —
-standard library only, same convention as `fetchers/`.
+Replaces/supplements manual spot-checking for SF5's own client tracking.
+Otterly.ai is an Ellison Technologies tool only and isn't available for SF5
+use — that gap is the reason this exists. Not a client-facing product. No
+third-party Python packages — standard library only, same convention as
+`fetchers/`.
 
 ## The metric: Citability Index
 
