@@ -16,6 +16,13 @@ BANDS = [
     (76, 100, "Strong"),
 ]
 
+BAND_DESCRIPTIONS = {
+    "Low visibility": "Brand rarely surfaces; likely a content/structure gap (Citability lever work needed).",
+    "Emerging": "Occasional mentions, few citations. Room to push toward source-level visibility.",
+    "Solid": "Consistently surfacing, regularly cited. Maintenance and monitoring for drop-offs.",
+    "Strong": "Brand is a go-to source across most tracked queries — rare at this stage, useful as an aspirational benchmark.",
+}
+
 # Open question from the build brief, resolved with a starting default:
 # flag a client in the weekly report if their blended Citability Index drops
 # by at least this many points since the previous run, OR drops into a lower

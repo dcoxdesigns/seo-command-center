@@ -115,7 +115,10 @@ def run(client_slugs=None, dry_run=True):
                     timestamp=run_timestamp,
                     mentioned=mentioned,
                     cited=cited,
-                    citation_urls=matched_citations,
+                    # store every citation URL returned, not just the ones matching
+                    # this client — competitors.py needs the full list to show who
+                    # got cited instead when this client didn't.
+                    citation_urls=response.citation_urls,
                     raw_response_path=raw_path,
                 )
                 flag = "CITED" if cited else ("mentioned" if mentioned else "-")

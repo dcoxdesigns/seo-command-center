@@ -13,7 +13,12 @@ import json
 import os
 import sqlite3
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "tracker.db")
+# Overridable via env var so tests/scratch scripts never touch real client
+# data by pointing at the same file (this bit — the hard way, once).
+DB_PATH = os.environ.get(
+    "AI_TRACKER_DB_PATH",
+    os.path.join(os.path.dirname(__file__), "..", "data", "tracker.db"),
+)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS runs (
@@ -70,6 +75,15 @@ def rows_for_run(conn, client, timestamp, platform=None):
         "SELECT * FROM runs WHERE client = ? AND timestamp = ?",
         (client, timestamp),
     ).fetchall()
+
+
+def prompt_matrix(conn, client, timestamp):
+    """{prompt: {platform: row}} for one run — the per-prompt x per-platform
+    breakdown a client-facing report table is built from."""
+    matrix = {}
+    for row in rows_for_run(conn, client, timestamp):
+        matrix.setdefault(row["prompt"], {})[row["platform"]] = row
+    return matrix
 
 
 def distinct_clients(conn):

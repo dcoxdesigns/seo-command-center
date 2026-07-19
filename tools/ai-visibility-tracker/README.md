@@ -74,7 +74,7 @@ so a bad parse or a future scoring-logic change never loses data.
 ## Reporting
 
 ```bash
-python report_cli.py                # every tracked client
+python report_cli.py                # every tracked client — quick internal check
 python report_cli.py --client acme  # one client
 ```
 
@@ -83,16 +83,39 @@ trend vs. the previous run. A client is flagged in the output if their
 blended index dropped 15+ points or fell into a lower band since last time —
 see `ALERT_DROP_THRESHOLD` in `tracker/citability.py` to tune that.
 
+### Client-facing report (printable/emailable)
+
+```bash
+python client_report_cli.py --client acme            # saves to clients/acme/reports/
+python client_report_cli.py --client acme --stdout    # print instead of saving
+```
+
+Generates a Markdown report in the same house style as
+`reports/page-review-template.md` — summary, Citability Index breakdown,
+per-prompt x per-platform matrix, and a **"Who's Getting Cited Instead"**
+table: the other domains showing up as sources when this client doesn't,
+pulled from every citation URL each platform actually returned (not just the
+ones matching the client). That's the same competitive-gap question step 2 of
+the nine-step process (AI Citation Gap Analysis) asks manually — this
+automates the "who's winning instead of you" part of it.
+
 ## Known gaps / things to verify before relying on this
 
-- **Platform API shapes are not live-tested.** No API keys were available
-  while building this — the ChatGPT, Perplexity, and Gemini integrations
-  (`tracker/platforms/*.py`) are built from each provider's documented
-  request/response shape, not verified against a real call. Run one client
-  with one prompt on each platform first and check the output before
-  trusting a full run. If a platform's parsing breaks, the raw HTTP response
-  is still logged to `clients/<slug>/data/ai-visibility-tracker/`, so nothing
-  is lost — only the detection step needs a fix and a re-parse.
+- **Perplexity is live-verified** — tested against a real call, request and
+  response parsing both confirmed correct. **ChatGPT and Gemini are still
+  unverified** — built from each provider's documented request/response
+  shape, no key was available to test either one live. Run one client with
+  one prompt on each before trusting a full run. If a platform's parsing
+  breaks, the raw HTTP response is still logged to
+  `clients/<slug>/data/ai-visibility-tracker/`, so nothing is lost — only the
+  detection step needs a fix and a re-parse.
+- **If you write test/scratch scripts against this tool, override the DB
+  path first**: `export AI_TRACKER_DB_PATH=/tmp/test.db`. `data/tracker.db`
+  is real client data — a test script that deletes "its" database on cleanup
+  will delete that file unless you point it elsewhere first. (Learned this
+  one directly: an early test script wiped real run data this way. Recovered
+  it from the raw JSON logs, which is exactly why those get saved before
+  anything is parsed — but better to just not repeat it.)
 - **Copilot is out of scope for v1** — no clean API without a paid scraping
   service.
 - **No client-facing dashboard** — this is an internal reporting tool.
