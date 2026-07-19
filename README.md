@@ -32,6 +32,7 @@ data/               legacy: shared performance exports — read-only inputs
 fetchers/           optional API-pull scripts (CSV path works without these), shared across clients
 tools/ai-visibility-tracker/  internal Citability Index tracker — ChatGPT/Perplexity/Gemini,
                     opt-in per client via clients/<name>/ai-visibility-tracker.json
+tools/report-to-html/  converts any SF5 markdown report to a branded, emailable HTML file
 prompts/            reusable named analysis prompts, shared across clients
 reports/            legacy: shared deliverables, dated + client-named
 qa/                 verification checklists, shared across clients — run before a report is "done"
