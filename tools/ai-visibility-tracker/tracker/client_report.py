@@ -9,19 +9,34 @@ import os
 from . import citability, competitors, db
 from .config import CLIENTS_DIR, load_client_config
 from .platforms import ALL as ALL_PLATFORMS
+from .runner import REPLICATES_PER_PROMPT
 
 PLATFORM_NAMES = [p.NAME for p in ALL_PLATFORMS]
 PLATFORM_LABELS = {"chatgpt": "ChatGPT", "perplexity": "Perplexity", "gemini": "Gemini"}
 
+METHODOLOGY_DISCLAIMER = (
+    "CI results are pulled from providers' grounded APIs, not the consumer-facing "
+    "apps (chatgpt.com, gemini.google.com, etc.). Consumer apps can differ in model "
+    "version, system instructions, personalization, and rollout state. The "
+    "Citability Index is a **reproducible directional benchmark** — it shows trend "
+    "and relative gap versus competitors, not a guarantee of what any individual "
+    "end-user will see in a live chat session."
+)
 
-def _cell(row):
-    if row is None:
+
+def _cell(rows):
+    """rows: the replicate rows for one (prompt, platform) cell — 0 if that
+    platform wasn't tested, otherwise REPLICATES_PER_PROMPT of them."""
+    if not rows:
         return "not tested"
-    if row["cited"]:
-        return "**Cited**"
-    if row["mentioned"]:
-        return "Mentioned"
-    return "—"
+    n = len(rows)
+    cited_n = sum(1 for r in rows if r["cited"])
+    mentioned_n = sum(1 for r in rows if r["mentioned"])
+    if cited_n:
+        return f"**Cited {cited_n}/{n}**"
+    if mentioned_n:
+        return f"Mentioned {mentioned_n}/{n}"
+    return f"— 0/{n}"
 
 
 def generate_markdown(client_slug):
@@ -109,6 +124,9 @@ def generate_markdown(client_slug):
     lines.append("")
 
     lines.append("## Prompts Tracked")
+    lines.append(f"*(Each prompt is run {REPLICATES_PER_PROMPT} times per platform per report — cells show "
+                  f"how many of those {REPLICATES_PER_PROMPT} calls surfaced a citation or mention, not a "
+                  f"single pass/fail.)*")
     lines.append("")
     header = "| Prompt | " + " | ".join(PLATFORM_LABELS[p] for p in PLATFORM_NAMES) + " |"
     sep = "|---|" + "|".join(["---"] * len(PLATFORM_NAMES)) + "|"
@@ -129,6 +147,12 @@ def generate_markdown(client_slug):
         "Citation is weighted higher than mention because being cited as a source "
         "means the page itself is doing the work, not just brand-name recognition.*"
     )
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+
+    lines.append("## Methodology Note")
+    lines.append(METHODOLOGY_DISCLAIMER)
     lines.append("")
 
     return "\n".join(lines)

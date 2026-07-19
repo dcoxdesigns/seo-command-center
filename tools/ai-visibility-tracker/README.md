@@ -24,6 +24,24 @@ page itself did the work, not just brand-name recognition.
 | 51-75 | Solid |
 | 76-100 | Strong |
 
+### Sampling methodology
+
+A single query against a single model on a single day is a sample size of
+one — AI answers vary run to run, and web search results shift underneath
+the same prompt. So every prompt is called **3 times per platform, per run**
+(`REPLICATES_PER_PROMPT` in `tracker/runner.py`), and Mention/Citation Rate
+are the average across those 3 calls, not a single pass/fail. All 3 raw
+responses are stored, not just the aggregate — that's the receipts if a
+client questions a score, and it's what lets the client report show "cited 2
+of 3 times" instead of a flattened yes/no.
+
+This also means the actual API call volume — and cost — is **3x** whatever a
+naive prompts × platforms count would suggest. The dry-run output in `python
+run.py` reflects the real, replicated total, not a pre-sampling estimate.
+
+Run the full battery on a defined cadence (monthly is the suggested default)
+so clients see a trend, not just a snapshot.
+
 ## Setup
 
 ```bash
@@ -92,12 +110,14 @@ python client_report_cli.py --client acme --stdout    # print instead of saving
 
 Generates a Markdown report in the same house style as
 `reports/page-review-template.md` — summary, Citability Index breakdown,
-per-prompt x per-platform matrix, and a **"Who's Getting Cited Instead"**
-table: the other domains showing up as sources when this client doesn't,
-pulled from every citation URL each platform actually returned (not just the
-ones matching the client). That's the same competitive-gap question step 2 of
-the nine-step process (AI Citation Gap Analysis) asks manually — this
-automates the "who's winning instead of you" part of it.
+a per-prompt x per-platform matrix (showing "Cited 2/3" style results, not a
+flattened binary), a **"Who's Getting Cited Instead"** table, and a
+methodology disclaimer explaining CI results come from providers' grounded
+APIs, not the consumer chat apps, and are a directional benchmark rather than
+a guarantee of any one user's live session. The "Who's Getting Cited Instead"
+table pulls from every citation URL each platform actually returned (not just
+the ones matching the client) — the same competitive-gap question step 2 of
+the nine-step process (AI Citation Gap Analysis) asks manually, automated.
 
 ## Known gaps / things to verify before relying on this
 
@@ -130,9 +150,10 @@ Single SQLite file at `data/tracker.db` (gitignored — real client data, not
 source). Schema:
 
 ```sql
-runs(id, client, platform, prompt, timestamp, mentioned, cited, citation_urls, raw_response_path)
+runs(id, client, platform, prompt, timestamp, replicate, mentioned, cited, citation_urls, raw_response_path)
 ```
 
 `timestamp` is shared by every row from the same `run.py` invocation, so
 grouping by timestamp is how reporting distinguishes "this run" from "a prior
-run" for the trend line.
+run" for the trend line. `replicate` (1-3) distinguishes the repeated calls
+the sampling methodology makes for the same prompt within that run.

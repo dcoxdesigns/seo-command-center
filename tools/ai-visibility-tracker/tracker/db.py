@@ -1,12 +1,19 @@
 """SQLite storage for tracker runs — single file, no external DB.
 
-Schema (matches the build brief):
-    runs(id, client, platform, prompt, timestamp, mentioned, cited,
+Schema:
+    runs(id, client, platform, prompt, timestamp, replicate, mentioned, cited,
          citation_urls, raw_response_path)
 
 `timestamp` is the run's start time (ISO 8601, one shared value per runner.py
-invocation) — every row from the same weekly run shares it, so grouping by
-timestamp is how you get "this run" vs. "a prior run" for trend reporting.
+invocation) — every row from the same run shares it, so grouping by timestamp
+is how you get "this run" vs. "a prior run" for trend reporting.
+
+`replicate` (1..N) distinguishes the repeated calls the sampling methodology
+makes for the same prompt in the same run — see runner.REPLICATES_PER_PROMPT.
+A single query on a single day is a sample size of one; storing each repeat
+as its own row (not just an aggregate) keeps the raw receipts if a client
+questions a score, and lets reports show "cited 2 of 3 times" nuance instead
+of a flattened binary.
 """
 
 import json
@@ -27,6 +34,7 @@ CREATE TABLE IF NOT EXISTS runs (
     platform TEXT NOT NULL,
     prompt TEXT NOT NULL,
     timestamp TEXT NOT NULL,
+    replicate INTEGER NOT NULL DEFAULT 1,
     mentioned INTEGER NOT NULL,
     cited INTEGER NOT NULL,
     citation_urls TEXT,
@@ -41,16 +49,22 @@ def connect():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
+    # Self-migrate DBs created before the `replicate` column existed.
+    try:
+        conn.execute("ALTER TABLE runs ADD COLUMN replicate INTEGER NOT NULL DEFAULT 1")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass  # column already exists
     return conn
 
 
-def insert_run(conn, *, client, platform, prompt, timestamp, mentioned, cited,
+def insert_run(conn, *, client, platform, prompt, timestamp, replicate, mentioned, cited,
                 citation_urls, raw_response_path):
     conn.execute(
         """INSERT INTO runs
-           (client, platform, prompt, timestamp, mentioned, cited, citation_urls, raw_response_path)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-        (client, platform, prompt, timestamp, int(mentioned), int(cited),
+           (client, platform, prompt, timestamp, replicate, mentioned, cited, citation_urls, raw_response_path)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (client, platform, prompt, timestamp, replicate, int(mentioned), int(cited),
          json.dumps(citation_urls or []), raw_response_path),
     )
     conn.commit()
@@ -78,11 +92,11 @@ def rows_for_run(conn, client, timestamp, platform=None):
 
 
 def prompt_matrix(conn, client, timestamp):
-    """{prompt: {platform: row}} for one run — the per-prompt x per-platform
-    breakdown a client-facing report table is built from."""
+    """{prompt: {platform: [rows]}} for one run — one list per cell since each
+    prompt/platform combination has REPLICATES_PER_PROMPT rows, not one."""
     matrix = {}
     for row in rows_for_run(conn, client, timestamp):
-        matrix.setdefault(row["prompt"], {})[row["platform"]] = row
+        matrix.setdefault(row["prompt"], {}).setdefault(row["platform"], []).append(row)
     return matrix
 
 
