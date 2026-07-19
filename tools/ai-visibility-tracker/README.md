@@ -106,12 +106,20 @@ see `ALERT_DROP_THRESHOLD` in `tracker/citability.py` to tune that.
 ### Client-facing report (printable/emailable)
 
 ```bash
-python client_report_cli.py --client acme            # saves to clients/acme/reports/
-python client_report_cli.py --client acme --stdout    # print instead of saving
+python client_report_cli.py --client acme                 # Markdown, saved to clients/acme/reports/
+python client_report_cli.py --client acme --html           # self-contained HTML — the one to actually email
+python client_report_cli.py --client acme --html --stdout  # print the HTML instead of saving
+python client_report_cli.py --client acme --stdout         # print the Markdown instead of saving
 ```
 
-Generates a Markdown report in the same house style as
-`reports/page-review-template.md` — summary, Citability Index breakdown,
+**Use `--html` for anything that leaves your editor.** Plain Markdown doesn't
+reliably render images or tables once it's pasted into an email or opened
+outside a markdown-aware tool — the HTML version is a single self-contained
+file (the Citability Index logo is embedded as base64, no external assets to
+break), opens correctly in any browser, and prints/exports to PDF cleanly via
+File → Print. Attach it directly or convert it to PDF first.
+
+Both formats show the same content: summary, Citability Index breakdown,
 a per-prompt x per-platform matrix (showing "Cited 2/3" style results, not a
 flattened binary), a **"Who's Getting Cited Instead"** table, and a
 methodology disclaimer explaining CI results come from providers' grounded
