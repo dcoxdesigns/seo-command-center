@@ -30,6 +30,8 @@ config/             legacy: one file per client/site (config/client.example.yml 
 data/               legacy: shared performance exports — read-only inputs
   gsc/  ga4/  ads/  ai-visibility/  crawl/  exports/
 fetchers/           optional API-pull scripts (CSV path works without these), shared across clients
+tools/ai-visibility-tracker/  internal Citability Index tracker — ChatGPT/Perplexity/Gemini,
+                    opt-in per client via clients/<name>/ai-visibility-tracker.json
 prompts/            reusable named analysis prompts, shared across clients
 reports/            legacy: shared deliverables, dated + client-named
 qa/                 verification checklists, shared across clients — run before a report is "done"

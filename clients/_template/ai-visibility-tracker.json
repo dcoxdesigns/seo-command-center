@@ -1,0 +1,10 @@
+{
+  "client": "Example Manufacturing Co",
+  "domain": "examplemfg.com",
+  "brand_variants": ["Example Manufacturing", "Example Mfg", "ExampleMfg Co"],
+  "prompts": [
+    "best industrial hose manufacturer for automotive",
+    "who makes reliable rubber hoses for factories",
+    "top B2B hose suppliers"
+  ]
+}

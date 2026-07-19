@@ -22,6 +22,10 @@ clients/*/
 # Business info (pricing, contracts) — private, never belongs in this public demo repo
 business/
 
+# AI visibility tracker's own SQLite DB and raw response logs — real client
+# run data, not source. The tool code itself stays tracked.
+tools/ai-visibility-tracker/data/
+
 # Local env / secrets
 .env
 .env.*
