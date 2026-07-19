@@ -139,7 +139,10 @@ def save_report(client_slug):
     reports_dir = os.path.join(CLIENTS_DIR, client_slug, "reports")
     os.makedirs(reports_dir, exist_ok=True)
     today = datetime.date.today().isoformat()
-    path = os.path.join(reports_dir, f"{today}-ai-visibility-report.md")
+    # Client slug in the filename too, not just the parent folder — so a report
+    # stays self-identifying once it's pulled out of clients/<slug>/reports/
+    # (emailed as an attachment, dropped in a shared folder, etc.).
+    path = os.path.join(reports_dir, f"{today}-{client_slug}-ai-visibility-report.md")
     with open(path, "w", encoding="utf-8") as f:
         f.write(markdown)
     return path
