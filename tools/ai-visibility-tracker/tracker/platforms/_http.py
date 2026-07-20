@@ -19,6 +19,6 @@ def post_json(url, headers, body, timeout=60):
             raw = json.loads(raw_body)
         except json.JSONDecodeError:
             raw = {"raw_text": raw_body}
-        raise PlatformError(f"HTTP {e.code} from {url}: {raw_body[:300]}", raw=raw) from e
+        raise PlatformError(f"HTTP {e.code} from {url}: {raw_body[:300]}", raw=raw, status_code=e.code) from e
     except urllib.error.URLError as e:
         raise PlatformError(f"Network error calling {url}: {e}") from e

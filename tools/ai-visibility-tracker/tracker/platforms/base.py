@@ -25,8 +25,12 @@ class PlatformResponse:
 
 class PlatformError(Exception):
     """Raised on a request/parse failure. The caller still has the raw HTTP
-    body (attached as .raw) to log, even when this is raised."""
+    body (attached as .raw) to log, even when this is raised. status_code is
+    set for HTTP failures (None for parse-shape errors) so callers can decide
+    whether a failure is worth retrying (e.g. 429) without string-matching
+    the message."""
 
-    def __init__(self, message, raw=None):
+    def __init__(self, message, raw=None, status_code=None):
         super().__init__(message)
         self.raw = raw
+        self.status_code = status_code

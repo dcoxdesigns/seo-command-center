@@ -1,10 +1,21 @@
-"""Gemini (Google AI) — generateContent with Search grounding.
+"""Gemini (Google AI) — Interactions API with Google Search grounding.
 
-NOT LIVE-TESTED — built from documented API shape, no Gemini key was
-available while writing this. Verify against
-https://ai.google.dev/gemini-api/docs/grounding before relying on it,
-especially: the "google_search" tool key casing and the model name below —
-both are areas Google has changed field names in before.
+Google retired the old `/v1beta/models/{model}:generateContent` REST endpoint
+in favor of `/v1beta/interactions` — a different endpoint, header-based auth
+(`x-goog-api-key` instead of a `?key=` query param), and a request/response
+shape close to OpenAI's Responses API (input + typed tools; steps with a
+model_output step holding text + annotations). Live-verified 2026-07-20
+against gemini-3.5-flash — the old generateContent endpoint now 404s for
+every model tried, not just a renamed one.
+
+One real trap: citation `url` values from this API are Google's own
+`vertexaisearch.cloud.google.com/grounding-api-redirect/...` links, not the
+actual destination — the real cited domain is in the annotation's `title`
+field instead. detection.py/competitors.py both parse a domain out of
+whatever URL they're given, so this module reconstructs a synthetic
+`https://{title}` URL rather than passing Google's redirect link through —
+otherwise every citation would silently resolve to Google's own domain and
+citation detection would never match anything.
 """
 
 import os
@@ -14,30 +25,39 @@ from .base import PlatformError, PlatformResponse
 
 NAME = "gemini"
 ENV_KEY = "GEMINI_API_KEY"
-MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+URL = "https://generativelanguage.googleapis.com/v1beta/interactions"
+MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash")
 
 
 def call(prompt, api_key):
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent?key={api_key}"
-    headers = {"Content-Type": "application/json"}
-    body = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "tools": [{"google_search": {}}],
+    headers = {
+        "x-goog-api-key": api_key,
+        "Content-Type": "application/json",
     }
-    raw = _http.post_json(url, headers, body)
+    body = {
+        "model": MODEL,
+        "input": prompt,
+        "tools": [{"type": "google_search"}],
+    }
+    raw = _http.post_json(URL, headers, body)
 
+    text_parts = []
+    citation_urls = []
     try:
-        candidate = raw["candidates"][0]
-        parts = candidate.get("content", {}).get("parts", [])
-        text = "\n".join(p.get("text", "") for p in parts)
-    except (KeyError, IndexError, TypeError) as e:
+        for step in raw.get("steps", []):
+            if step.get("type") != "model_output":
+                continue
+            for content in step.get("content", []):
+                if content.get("type") != "text":
+                    continue
+                text_parts.append(content.get("text", ""))
+                for ann in content.get("annotations", []) or []:
+                    if ann.get("type") != "url_citation":
+                        continue
+                    title = ann.get("title")
+                    if title:
+                        citation_urls.append(f"https://{title}")
+    except (AttributeError, TypeError) as e:
         raise PlatformError(f"Unexpected response shape from Gemini: {e}", raw=raw)
 
-    citation_urls = []
-    grounding_chunks = candidate.get("groundingMetadata", {}).get("groundingChunks", []) or []
-    for chunk in grounding_chunks:
-        web = chunk.get("web") or {}
-        if web.get("uri"):
-            citation_urls.append(web["uri"])
-
-    return PlatformResponse(text=text, citation_urls=citation_urls, raw=raw)
+    return PlatformResponse(text="\n".join(text_parts), citation_urls=citation_urls, raw=raw)

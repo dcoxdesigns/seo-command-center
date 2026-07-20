@@ -33,9 +33,33 @@ EST_COST_PER_CALL_HIGH = 0.033
 
 SLEEP_BETWEEN_CALLS_SECONDS = 1.5
 
+# On a 429, wait and retry rather than just dropping the call — low usage
+# tiers (e.g. OpenAI Tier 1) cap requests/minute well below what a 3x-replicate
+# run fires back to back, so a bare per-call sleep isn't enough to avoid
+# tripping it. Delays are seconds to wait before each successive retry;
+# providers' own "try again in Ns" guidance runs ~20s at the lowest tiers, so
+# these are sized to clear a minute-window cap rather than to dodge a
+# sub-second burst limit.
+RATE_LIMIT_RETRY_DELAYS = [20, 40]
+
 
 def _slugify(text):
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")[:60]
+
+
+def _call_with_retry(platform, prompt, api_key):
+    """platform.call(), retrying on 429 with backoff. Any other error (or a
+    429 that still fails after all retries) propagates to the caller
+    unchanged, same as a direct platform.call() would."""
+    for attempt, delay in enumerate([0] + RATE_LIMIT_RETRY_DELAYS):
+        if delay:
+            print(f"    [rate limited] {platform.NAME} — waiting {delay}s before retry {attempt}/{len(RATE_LIMIT_RETRY_DELAYS)}")
+            time.sleep(delay)
+        try:
+            return platform.call(prompt, api_key)
+        except Exception as e:
+            if getattr(e, "status_code", None) != 429 or attempt == len(RATE_LIMIT_RETRY_DELAYS):
+                raise
 
 
 def _available_platforms():
@@ -102,7 +126,7 @@ def run(client_slugs=None, dry_run=True):
                 results = []
                 for replicate in range(1, REPLICATES_PER_PROMPT + 1):
                     try:
-                        response = platform.call(prompt, api_key)
+                        response = _call_with_retry(platform, prompt, api_key)
                     except Exception as e:
                         print(f"  [error] {platform.NAME} / {prompt!r} (replicate {replicate}): {e}")
                         raw = getattr(e, "raw", None)
