@@ -13,6 +13,7 @@ config/*.yaml
 # Generated reports (client-named)
 reports/*.md
 !reports/.gitkeep
+!reports/page-review-template.md
 
 # Real per-client folders (data/reports/client-facts) — _template is the tracked scaffold
 clients/*/

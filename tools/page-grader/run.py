@@ -5,6 +5,7 @@ Usage:
     python run.py --url https://example.com/page                    # dry run
     python run.py --url https://example.com/page --run               # actually calls Claude, spends money
     python run.py --url https://example.com/page --run --client acme # saves to clients/acme/reports/
+    python run.py --url https://example.com/page --run --query "best 5-axis CNC machine for aerospace"
     python run.py --file page.html --run
     python run.py --text "paste raw page copy here" --run
 
@@ -33,6 +34,7 @@ def main():
     source.add_argument("--text", help="Raw pasted text/content to review (not full HTML).")
     parser.add_argument("--client", help="Client slug (clients/<slug>/) — enables client-facts.md context and saves the report there.")
     parser.add_argument("--page-name", help="Name for the report title (default: page <title> tag or the source).")
+    parser.add_argument("--query", help="Declared target query this page should win — if omitted, the AI infers it from the page.")
     parser.add_argument("--run", action="store_true", help="Actually execute (default is dry run).")
     args = parser.parse_args()
 
@@ -41,7 +43,7 @@ def main():
 
     review(
         url=args.url, file=args.file, text=args.text,
-        client=args.client, page_name=args.page_name,
+        client=args.client, page_name=args.page_name, target_query=args.query,
         dry_run=not args.run,
     )
 

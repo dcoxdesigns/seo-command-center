@@ -15,6 +15,18 @@ LEVER_LABELS = {
 }
 LEVER_ORDER = ["citability", "conversational_alignment", "authority_signals", "factual_density", "structured_clarity"]
 
+SEO_INTENT_LABELS = {
+    "intent_match": "Intent Match",
+    "subtopic_coverage": "Subtopic Coverage",
+    "answer_extractability": "Answer Extractability",
+    "title_meta_h1_alignment": "Title/Meta/H1 Alignment",
+    "technical_schema_health": "Technical/Schema Health",
+}
+SEO_INTENT_ORDER = [
+    "intent_match", "subtopic_coverage", "answer_extractability",
+    "title_meta_h1_alignment", "technical_schema_health",
+]
+
 
 def _rewrite_block(label, entry):
     if not entry or (entry.get("current") is None and entry.get("suggested") is None):
@@ -32,12 +44,30 @@ def build_markdown(*, page_name, client_name, ai_result, structural_facts):
     lines.append("")
     lines.append("---")
     lines.append("")
+    target = ai_result.get("target") or {}
+    lines.append("## Target")
+    lines.append(f"**Query:** {target.get('query', 'N/A')}")
+    lines.append(f"**Persona:** {target.get('persona', 'N/A')}")
+    lines.append(f"**Funnel Stage:** {target.get('funnel_stage', 'N/A')}")
+    lines.append("")
+    lines.append("---")
+    lines.append("")
     lines.append("## Summary")
     lines.append(ai_result.get("summary", "").strip())
     lines.append("")
     lines.append("---")
     lines.append("")
-    lines.append("## Five-Lever Scorecard")
+    lines.append("## SEO Intent Match")
+    lines.append("")
+    lines.append("| Item | Score | Why |")
+    lines.append("|---|---|---|")
+    for key in SEO_INTENT_ORDER:
+        entry = ai_result.get("seo_intent", {}).get(key, {})
+        lines.append(f"| {SEO_INTENT_LABELS[key]} | {entry.get('score', 'N/A')} | {entry.get('why', '')} |")
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+    lines.append("## Five-Lever Scorecard (GEO)")
     lines.append("")
     lines.append("| Lever | Score | Why |")
     lines.append("|---|---|---|")

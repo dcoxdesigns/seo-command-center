@@ -21,7 +21,7 @@ def _slugify(text):
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")[:60]
 
 
-def review(*, url=None, file=None, text=None, client=None, page_name=None, dry_run=True):
+def review(*, url=None, file=None, text=None, client=None, page_name=None, target_query=None, dry_run=True):
     if sum(x is not None for x in (url, file, text)) != 1:
         raise ValueError("Provide exactly one of url, file, or text.")
 
@@ -31,6 +31,10 @@ def review(*, url=None, file=None, text=None, client=None, page_name=None, dry_r
         print(f"Source: {source_label}")
         if client:
             print(f"Client: {client}")
+        if target_query:
+            print(f"Target query: {target_query}")
+        else:
+            print("Target query: none declared — will be inferred from the page.")
         print(f"Estimated cost: ${EST_COST_LOW:.2f}-${EST_COST_HIGH:.2f} (rough — check console.anthropic.com for actuals).")
         print("Re-run with --run to execute.")
         return None
@@ -51,8 +55,8 @@ def review(*, url=None, file=None, text=None, client=None, page_name=None, dry_r
     print(f"  Images: {facts['total_images']} ({facts['images_missing_alt']} missing alt)  "
           f"|  Word count: {facts['word_count']}")
 
-    print("Calling Claude to score the five levers...")
-    ai_result, raw = ai_judge.score_page(page_text, facts, client_slug=client)
+    print("Calling Claude to score SEO intent match and the five GEO levers...")
+    ai_result, raw = ai_judge.score_page(page_text, facts, client_slug=client, target_query=target_query)
 
     resolved_page_name = page_name or facts["title"] or source_label
     client_name = client or "(no client specified)"

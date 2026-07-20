@@ -29,6 +29,18 @@ Respond with ONLY valid JSON, no markdown fences, no commentary before or
 after, matching exactly this shape:
 
 {
+  "target": {
+    "query": "the real query/queries this page should win — if a declared or obvious keyword isn't actually a query a person would type or ask, say so here instead of pretending it is",
+    "persona": "one sentence: who this page is realistically for, and why — base this on the actual page content and client facts, not a generic guess",
+    "funnel_stage": "Awareness|Consideration|Decision"
+  },
+  "seo_intent": {
+    "intent_match": {"score": "Pass|Needs Work|Fail", "why": "does the page answer the actual question behind the query, not just contain the keyword?"},
+    "subtopic_coverage": {"score": "Pass|Needs Work|Fail", "why": "are the must-cover subtopics for this query actually present?"},
+    "answer_extractability": {"score": "Pass|Needs Work|Fail", "why": "can a reader get the answer above the fold, without scrolling past a hero or company history?"},
+    "title_meta_h1_alignment": {"score": "Pass|Needs Work|Fail", "why": "do title, meta, and H1 all match the QUERY (not just each other)?"},
+    "technical_schema_health": {"score": "Pass|Needs Work|Fail", "why": "ground this in the structural facts already given (schema_types_found, jsonld_parse_errors) — don't re-guess what's already verified"}
+  },
   "summary": "2-3 sentences: overall state, the single biggest opportunity, the single biggest risk if nothing changes",
   "levers": {
     "citability": {"score": "Pass|Needs Work|Fail", "why": "one line"},
@@ -69,16 +81,20 @@ Guardrails, same as this repo's page-reviewer.md workflow:
   "why" or leave the field null instead of inventing one.
 - Score honestly. A page doesn't need five failures to be a valid review —
   if something genuinely passes, say Pass.
+- Target query, persona, and funnel stage are inferred from the actual page
+  content (and client facts, if given) — not a generic guess. If the page
+  genuinely doesn't make its target audience or query clear, say that
+  plainly in "why" fields rather than inventing a confident-sounding answer.
 - This produces a draft report only. Nothing here gets written to a live site.
 """
 
 
-def build_prompt(page_text, structural_facts, client_slug=None):
+def build_prompt(page_text, structural_facts, client_slug=None, target_query=None):
     parts = [
-        "You are running Small Factory 5's five-lever page review workflow. "
-        "Score this page against the framework below exactly as a human reviewer would.",
+        "You are running Small Factory 5's page review workflow — both the SEO intent-match "
+        "scorecard and the five-lever GEO framework — exactly as a human reviewer would.",
         "",
-        "## Five-Lever Framework (the scoring standard)",
+        "## Five-Lever Framework (the GEO scoring standard)",
         config_docs.five_lever_framework(),
         "",
         "## Brand Voice (write every 'why', fix, and rewrite in this voice)",
@@ -88,6 +104,23 @@ def build_prompt(page_text, structural_facts, client_slug=None):
     facts = config_docs.client_facts(client_slug)
     if facts:
         parts += ["", "## Client Facts (check the page against this; flag contradictions)", facts]
+
+    if target_query:
+        parts += [
+            "",
+            "## Declared target query (from the operator)",
+            f'"{target_query}"',
+            "Score seo_intent against this declared query. If it genuinely isn't a real query pattern "
+            "a person would type or ask, say so in intent_match's \"why\" instead of scoring against it "
+            "as if it were valid.",
+        ]
+    else:
+        parts += [
+            "",
+            "## Target query",
+            "No target query was declared — infer the real query/queries this page is actually trying "
+            "to win from the page content itself, and score seo_intent against that inferred query.",
+        ]
 
     parts += [
         "",
@@ -115,9 +148,9 @@ def build_prompt(page_text, structural_facts, client_slug=None):
     return "\n".join(parts)
 
 
-def score_page(page_text, structural_facts, client_slug=None, api_key=None):
+def score_page(page_text, structural_facts, client_slug=None, api_key=None, target_query=None):
     api_key = api_key or os.environ["ANTHROPIC_API_KEY"]
-    prompt = build_prompt(page_text, structural_facts, client_slug)
+    prompt = build_prompt(page_text, structural_facts, client_slug, target_query)
 
     body = {
         "model": MODEL,
