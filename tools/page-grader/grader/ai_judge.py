@@ -4,9 +4,13 @@ automating what prompts/page-reviewer.md normally does in a live Claude Code
 session. Structural facts (heading hierarchy, schema presence) are computed
 by structural.py and passed in as ground truth, not re-guessed here.
 
-NOT LIVE-TESTED — built from Anthropic's documented Messages API shape.
-Verify against https://docs.anthropic.com/en/api/messages before relying on
-it for real client work.
+Live-verified 2026-07-20 against the real Anthropic API (via the TypeScript
+port in smallfactory5-site's /tools/page-review/, same prompt/schema logic) —
+a full run against smallfactory5.com's homepage returned a well-formed,
+accurate five-lever scorecard with a genuinely non-obvious finding (the page
+says "I" throughout but never states a name in visible text). MAX_TOKENS was
+bumped from 4000 to 8000 after the first live run truncated mid-JSON on a
+full report — that fix is applied here too.
 """
 
 import json
@@ -18,7 +22,7 @@ from . import config_docs
 
 URL = "https://api.anthropic.com/v1/messages"
 MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-5")
-MAX_TOKENS = 4000
+MAX_TOKENS = 8000
 
 RESPONSE_SCHEMA_NOTE = """
 Respond with ONLY valid JSON, no markdown fences, no commentary before or

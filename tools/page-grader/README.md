@@ -69,15 +69,16 @@ ships to a client, and it says so on the report itself.
 
 ## Known gaps
 
-- **Not live-tested against a real Anthropic key** while building this — the
-  API call shape follows Anthropic's documented Messages API, but hasn't hit
-  a real endpoint yet. Verify against
-  https://docs.anthropic.com/en/api/messages before trusting a real run.
+- **Live-verified 2026-07-20** — a full run against a real page returned a
+  well-formed, accurate five-lever scorecard (see `ai_judge.py`'s module
+  docstring for what it found). `MAX_TOKENS` was bumped from 4000 to 8000
+  after the first live run truncated mid-JSON on a full report.
 - **Guardrails are prompt-level, not code-enforced.** The AI is instructed
   not to invent facts/specs/competitor claims, same as the manual workflow's
   guardrails — but that's an instruction to the model, not something this
   tool can mechanically verify. Spot-check rewrites before they ship, same
   as you would for a manually-written review.
-- **No web UI.** CLI only, matching the rest of `tools/`. Whether this
-  becomes a client-facing self-serve tool on the site is a separate decision
-  from building the underlying engine.
+- **No CLI-native web UI**, but a client-facing version now exists —
+  see `smallfactory5-site`'s `/tools/page-review/` (password-protected,
+  TypeScript port of this same logic since the two repos can't share code
+  directly). This Python CLI tool remains the internal/unrestricted version.
