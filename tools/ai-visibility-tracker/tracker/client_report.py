@@ -1,12 +1,17 @@
 """Generates printable/emailable reports for one client's latest run —
 Markdown (house style matches reports/page-review-template.md) and a
-self-contained HTML version (single file, logo embedded as base64, opens in
-any browser and prints/exports to PDF cleanly — the more reliable format for
-actually emailing to a client, since plain .md doesn't render images or
-tables in most mail clients).
+self-contained HTML version (single file, opens in any browser and
+prints/exports to PDF cleanly — the more reliable format for actually
+emailing to a client, since plain .md doesn't render images or tables in
+most mail clients).
+
+The HTML deliberately matches smallfactory5-site's actual design system —
+same CSS tokens, same Google Fonts, same inline SVG logo used by the
+Page Review Tool's report (src/lib/grader/renderReport.ts /
+GraderReportStyles.astro on that repo) — rather than a one-off look, so
+every SF5 client deliverable is visually the same product.
 """
 
-import base64
 import datetime
 import html as html_lib
 import os
@@ -19,7 +24,34 @@ from .runner import REPLICATES_PER_PROMPT
 PLATFORM_NAMES = [p.NAME for p in ALL_PLATFORMS]
 PLATFORM_LABELS = {"chatgpt": "ChatGPT", "perplexity": "Perplexity", "gemini": "Gemini"}
 
-LOGO_PATH = os.path.join(os.path.dirname(__file__), "..", "assets", "citability-index-logo.png")
+# Same mark used at the top of every Page Review Tool report on
+# smallfactory5-site — kept identical (not regenerated) so both deliverable
+# types show the exact same logo.
+LOGO_SVG = (
+    '<svg viewBox="0 0 4000 3000" xmlns="http://www.w3.org/2000/svg" '
+    'style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">'
+    '<path fill="#15171B" d="M1894,2704l-1132.394,0l-0,-754.146l375.79,-366.812l0,305.249l398.876,-342.444l0,310.38l'
+    '357.727,-311.897l0,-524.33l403.47,0l65.53,-634l162,0l77.817,634l44.654,0l65.53,-634l162,0l77.817,634l64.654,0l'
+    '65.53,-634l162,0l77.817,634l256.183,0l0,1685l-1685,0l0,-1Z"/>'
+    '<text x="2206px" y="2475px" style="font-family:\'Arial-Black\',\'Arial Black\',sans-serif;font-weight:900;'
+    'font-size:1592.889px;fill:#EDECE4;">5</text>'
+    '<g transform="matrix(1.435334,0,0,1.435334,687.660465,666.494491)">'
+    '<text x="210px" y="1094px" style="font-family:\'Impact\',sans-serif;font-stretch:condensed;font-size:184.278px;'
+    'fill:#EDECE4;">SMALL</text>'
+    '<text x="210px" y="1260.667px" style="font-family:\'Impact\',sans-serif;font-stretch:condensed;'
+    'font-size:184.278px;fill:#EDECE4;">F<tspan x="279.644px 373.223px " y="1260.667px 1260.667px ">AC</tspan>'
+    'TORY</text></g></svg>'
+)
+
+# Matches the score-row coloring convention from GraderReportStyles.astro
+# (pass/needs-work/fail), extended to a fourth "strong" tier since bands
+# here aren't binary pass/fail.
+BAND_CLASS = {
+    "Low visibility": "band-fail",
+    "Emerging": "band-needswork",
+    "Solid": "band-pass",
+    "Strong": "band-strong",
+}
 
 METHODOLOGY_DISCLAIMER = (
     "CI results are pulled from providers' grounded APIs, not the consumer-facing "
@@ -244,26 +276,44 @@ def save_report(client_slug):
 # -------------------------------------------------------------------- HTML
 
 _HTML_STYLE = """
-body{margin:0;background:#EDECE4;color:#15171B;font-family:-apple-system,'IBM Plex Sans',Arial,sans-serif;line-height:1.5;}
-.wrap{max-width:820px;margin:0 auto;padding:40px 32px 64px;}
-.logo{display:block;margin:0 auto 24px;width:120px;height:120px;}
-h1{font-size:1.7rem;text-align:center;margin:0 0 6px;color:#15171B;}
-.meta{text-align:center;color:#5B6472;font-size:0.9rem;margin-bottom:32px;}
-h2{font-size:1.2rem;color:#2C4870;border-bottom:2px solid #2C4870;padding-bottom:6px;margin:36px 0 14px;}
-.card{background:#fff;border:1px solid #C9C6BA;border-radius:6px;padding:24px 28px;margin-bottom:8px;}
-.score{font-size:2.6rem;font-weight:800;color:#C15A2E;}
-.band{font-size:1.1rem;color:#2C4870;font-weight:600;}
+:root{
+  --paper:#EDECE4;
+  --paper-dark:#E1DFD5;
+  --ink:#15171B;
+  --steel:#5B6472;
+  --blueprint:#2C4870;
+  --signal:#F2A900;
+  --line:#C9C6BA;
+  --radius:2px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:820px;margin:0 auto;padding:48px 32px 64px;}
+.report-header{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding-bottom:24px;margin-bottom:8px;border-bottom:2px solid var(--blueprint);}
+.report-header svg{width:72px;height:54px;}
+.report-header .tagline{font-family:'Big Shoulders Display',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:0.02em;font-size:1.9rem;line-height:1;color:var(--ink);}
+.report-header h1{font-family:'IBM Plex Sans',sans-serif;font-weight:600;text-transform:none;letter-spacing:0;font-size:1.15rem;color:var(--steel);margin:0;}
+.meta{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--steel);text-align:center;margin:8px 0 0;}
+h2{font-size:1.2rem;font-weight:700;color:var(--blueprint);border-bottom:2px solid var(--blueprint);padding-bottom:6px;margin:44px 0 14px;}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:24px 28px;margin-bottom:8px;}
+.band-chip{display:inline-flex;align-items:center;gap:14px;padding:10px 18px;border-radius:var(--radius);}
+.score{font-size:2.6rem;font-weight:800;font-family:'Big Shoulders Display',sans-serif;}
+.band{font-size:1.05rem;font-weight:600;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:0.04em;}
+.band-pass{background:#E3F2E5;} .band-pass .score,.band-pass .band{color:#1E5C2E;}
+.band-needswork{background:#FDF3DC;} .band-needswork .score,.band-needswork .band{color:#8A5A00;}
+.band-fail{background:#FBEAE8;} .band-fail .score,.band-fail .band{color:#A62D20;}
+.band-strong{background:#E4EAF2;} .band-strong .score,.band-strong .band{color:var(--blueprint);}
 table{width:100%;border-collapse:collapse;margin:12px 0;background:#fff;}
-th,td{text-align:left;padding:9px 12px;border:1px solid #C9C6BA;font-size:0.92rem;}
-th{background:#2C4870;color:#fff;}
-.note{color:#5B6472;font-size:0.88rem;font-style:italic;}
-.trend-flagged{color:#B23A2E;font-weight:700;}
-.cell-cited{color:#2E6B3E;font-weight:700;}
-.cell-mentioned{color:#8A6D00;}
-.cell-none{color:#8a8a8a;}
-.cell-skipped{color:#b5b5b5;font-style:italic;}
-.disclaimer{background:#fff;border-left:4px solid #C15A2E;padding:14px 20px;font-size:0.86rem;color:#5B6472;margin-top:8px;}
-footer{text-align:center;color:#8a8a8a;font-size:0.78rem;margin-top:40px;}
+th,td{text-align:left;padding:9px 12px;border:1px solid var(--line);font-size:0.92rem;}
+th{background:var(--blueprint);color:var(--paper);font-family:'IBM Plex Mono',monospace;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;}
+.note{color:var(--steel);font-size:0.88rem;font-style:italic;}
+.trend-flagged{color:#A62D20;font-weight:700;}
+.cell-cited{color:#1E5C2E;font-weight:700;}
+.cell-mentioned{color:#8A5A00;}
+.cell-none{color:var(--steel);}
+.cell-skipped{color:var(--steel);font-style:italic;}
+.disclaimer{background:#fff;border:1px solid var(--line);border-left:4px solid var(--signal);border-radius:var(--radius);padding:14px 20px;font-size:0.86rem;color:var(--steel);margin-top:8px;}
+footer{text-align:center;color:var(--steel);font-size:0.68rem;font-style:italic;font-family:'IBM Plex Mono',monospace;margin-top:44px;padding-top:14px;border-top:1px solid var(--line);}
 """
 
 _CELL_CLASS = {"cited": "cell-cited", "mentioned": "cell-mentioned", "none": "cell-none", "skipped": "cell-skipped"}
@@ -273,39 +323,37 @@ def _e(text):
     return html_lib.escape(str(text))
 
 
-def _logo_data_uri():
-    if not os.path.exists(LOGO_PATH):
-        return None
-    with open(LOGO_PATH, "rb") as f:
-        encoded = base64.b64encode(f.read()).decode("ascii")
-    return f"data:image/png;base64,{encoded}"
-
-
 def _render_html(data):
     cfg = data["cfg"]
     matrix = data["matrix"]
     blended = data["blended"]
     band = data["band"]
     band_desc = data["band_desc"]
-    logo_uri = _logo_data_uri()
+    band_class = BAND_CLASS.get(band, "band-fail")
 
     parts = []
-    parts.append(f"<!doctype html><html lang='en'><head><meta charset='utf-8'>")
+    parts.append("<!doctype html><html lang='en'><head><meta charset='utf-8'>")
     parts.append(f"<title>AI Visibility Report — {_e(cfg.client)}</title>")
+    parts.append(
+        "<link rel='preconnect' href='https://fonts.googleapis.com'>"
+        "<link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>"
+        "<link href='https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900"
+        "&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap' rel='stylesheet'>"
+    )
     parts.append(f"<style>{_HTML_STYLE}</style></head><body><div class='wrap'>")
 
-    if logo_uri:
-        parts.append(f"<img class='logo' src='{logo_uri}' alt='Citability Index — Small Factory 5'>")
-    parts.append(f"<h1>AI Visibility Report — {_e(cfg.client)}</h1>")
-    parts.append(f"<div class='meta'>Client: {_e(cfg.client)} &nbsp;|&nbsp; Date: {_e(data['today'])} "
-                  f"&nbsp;|&nbsp; Prepared by: Small Factory 5</div>")
+    parts.append(f"<div class='report-header'>{LOGO_SVG}"
+                  f"<div class='tagline'>Built to be cited.</div>"
+                  f"<h1>AI Visibility Report — {_e(cfg.client)}</h1></div>")
+    parts.append(f"<div class='meta'>Date: {_e(data['today'])} &nbsp;·&nbsp; Prepared by: Small Factory 5</div>")
 
     parts.append("<h2>Summary</h2><div class='card'>")
-    parts.append(f"<p>{_e(cfg.client)}'s blended Citability Index is "
-                  f"<span class='score'>{blended['citability_index']}</span> "
-                  f"<span class='band'>({_e(band)})</span></p>")
-    parts.append(f"<p>Across {len(matrix)} tracked prompt(s) on "
-                  f"{_e(', '.join(PLATFORM_LABELS[p] for p in PLATFORM_NAMES))}."
+    parts.append(f"<div class='band-chip {band_class}'>"
+                  f"<span class='score'>{blended['citability_index']}</span>"
+                  f"<span class='band'>{_e(band)}</span></div>")
+    parts.append(f"<p style='margin-top:16px;'>{_e(cfg.client)}'s blended Citability Index is "
+                  f"<strong>{blended['citability_index']} ({_e(band)})</strong> across {len(matrix)} tracked "
+                  f"prompt(s) on {_e(', '.join(PLATFORM_LABELS[p] for p in PLATFORM_NAMES))}."
                   f"{_e(_trend_sentence(data))}</p>")
     parts.append(f"<p>{_e(band_desc)}</p></div>")
 
@@ -385,7 +433,7 @@ def _render_html(data):
     parts.append("<h2>Methodology Note</h2>")
     parts.append(f"<div class='disclaimer'>{_e(METHODOLOGY_DISCLAIMER)}</div>")
 
-    parts.append("<footer>Small Factory 5 — Built to be cited.</footer>")
+    parts.append(f"<footer>Report generated by David Cox, Small Factory 5 — {_e(data['today'])}</footer>")
     parts.append("</div></body></html>")
     return "\n".join(parts)
 
