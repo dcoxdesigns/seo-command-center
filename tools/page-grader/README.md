@@ -19,7 +19,17 @@ Density, Structured Clarity.
   Conversational Alignment, Authority Signals, and Factual Density, and
   drafts the fixes and rewritten elements. These require actually reading
   and understanding the content, not just parsing tags — no rule-based
-  heuristic gets this right.
+  heuristic gets this right. It also establishes the target query/persona/
+  funnel-stage and scores a separate SEO Intent Match table (intent match,
+  subtopic coverage, answer extractability, title/meta/H1-vs-query
+  alignment, technical/schema health) alongside the five GEO levers.
+- **Internal linking** (`grader/crawl.py`) — deterministic, not AI-judged:
+  reads a Screaming Frog export (`clients/<slug>/data/crawl/internal_all.csv`
+  + `all_inlinks.csv`) if one exists for the client, and finds real inbound
+  candidates (topical overlap with other crawled pages, labeled "confirmed
+  gap" only when inlink data is available to actually check) and outbound
+  opportunities (anchor text that already appears verbatim in the page's own
+  copy — never invented). Silently skipped if no crawl export exists.
 
 The prompt is built from `config/five-lever-framework.md` and
 `config/brand-voice.md` **read at runtime**, not copied into this tool's
@@ -40,9 +50,22 @@ cp .env.example .env
 python run.py --url https://example.com/page                       # dry run, no API call
 python run.py --url https://example.com/page --run                  # real run, prints report (no client given)
 python run.py --url https://example.com/page --run --client acme    # saves to clients/acme/reports/
+python run.py --url https://example.com/page --run --query "best 5-axis CNC machine for aerospace"
 python run.py --file page.html --run --client acme
 python run.py --text "paste draft copy here" --run
 ```
+
+`--query` declares the target query the page should win — if omitted, the
+AI infers it from the page instead (and says so if the page doesn't make
+its target obvious).
+
+If `--client <slug>` has a crawl export at
+`clients/<slug>/data/crawl/internal_all.csv` (a Screaming Frog "Internal
+All" report — "All Inlinks" too, if you want confirmed-gap detection
+instead of just topical candidates), the report also gets an Internal
+Linking section, computed from the real crawl, not guessed. No export?
+No section — silently skipped, no error. Free tier of Screaming Frog
+covers sites under 500 URLs; a license is needed above that.
 
 Always dry-runs by default — same safety pattern as every other tool in this
 repo that spends real API money. One review is one Claude API call, roughly

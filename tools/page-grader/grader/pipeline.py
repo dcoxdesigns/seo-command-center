@@ -7,7 +7,7 @@ an accidental invocation shouldn't spend money without an explicit --run.
 import os
 import re
 
-from . import ai_judge, config_docs, fetch, report, structural
+from . import ai_judge, config_docs, crawl, fetch, report, structural
 
 CLIENTS_DIR = config_docs.CLIENTS_DIR
 
@@ -58,6 +58,17 @@ def review(*, url=None, file=None, text=None, client=None, page_name=None, targe
     print("Calling Claude to score SEO intent match and the five GEO levers...")
     ai_result, raw = ai_judge.score_page(page_text, facts, client_slug=client, target_query=target_query)
 
+    linking = None
+    if client:
+        crawl_data = crawl.load_crawl(client, CLIENTS_DIR)
+        if crawl_data is None:
+            print("  (no crawl export found at data/crawl/internal_all.csv — skipping internal-linking analysis)")
+        else:
+            inbound = crawl.find_inbound_candidates(crawl_data, url, limit=5) if url else []
+            outbound = crawl.find_outbound_opportunities(page_text, crawl_data, url, limit=8)
+            linking = {"inbound": inbound, "outbound": outbound}
+            print(f"  Internal linking: {len(inbound)} inbound candidate(s), {len(outbound)} outbound opportunity(ies)")
+
     resolved_page_name = page_name or facts["title"] or source_label
     client_name = client or "(no client specified)"
     markdown = report.build_markdown(
@@ -65,6 +76,7 @@ def review(*, url=None, file=None, text=None, client=None, page_name=None, targe
         client_name=client_name,
         ai_result=ai_result,
         structural_facts=facts,
+        linking=linking,
     )
 
     saved_path = None

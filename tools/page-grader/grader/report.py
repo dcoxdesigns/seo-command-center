@@ -36,7 +36,39 @@ def _rewrite_block(label, entry):
     return f"**{label}:**\n- Current: `{current}`\n- Suggested: `{suggested}`"
 
 
-def build_markdown(*, page_name, client_name, ai_result, structural_facts):
+def _linking_section(linking):
+    lines = ["## Internal Linking", ""]
+    inbound = linking.get("inbound") or []
+    outbound = linking.get("outbound") or []
+
+    lines.append("**Inbound candidates** *(other pages that could link to this one)*")
+    if inbound:
+        lines.append("")
+        lines.append("| Source Page | Shared Topics | Status |")
+        lines.append("|---|---|---|")
+        for c in inbound:
+            lines.append(f"| [{c['title'] or c['url']}]({c['url']}) | {', '.join(c['shared_terms'])} | {c['status']} |")
+    else:
+        lines.append("None found — either no topical overlap in the crawl, or this page already has inbound coverage.")
+    lines.append("")
+
+    lines.append("**Outbound opportunities** *(anchor text already on this page, pointing at a real destination)*")
+    if outbound:
+        lines.append("")
+        lines.append("| Anchor Text (found on page) | Destination |")
+        lines.append("|---|---|")
+        for o in outbound:
+            lines.append(f"| {o['anchor_text']} | [{o['title'] or o['url']}]({o['url']}) |")
+    else:
+        lines.append("None found — no other crawled page's title/H1 appears as a real phrase in this page's copy.")
+    lines.append("")
+    lines.append("*Inbound candidates are topical matches from the crawl, not a confirmed absence of a link, unless "
+                  "marked \"confirmed gap\" (only possible when all_inlinks.csv was available). Outbound anchor text "
+                  "is never invented — only phrases that genuinely already appear on this page are suggested.*")
+    return lines
+
+
+def build_markdown(*, page_name, client_name, ai_result, structural_facts, linking=None):
     today = datetime.date.today().isoformat()
     lines = []
     lines.append(f"# Page Review — {page_name}")
@@ -67,6 +99,10 @@ def build_markdown(*, page_name, client_name, ai_result, structural_facts):
     lines.append("")
     lines.append("---")
     lines.append("")
+    if linking is not None:
+        lines.extend(_linking_section(linking))
+        lines.append("---")
+        lines.append("")
     lines.append("## Five-Lever Scorecard (GEO)")
     lines.append("")
     lines.append("| Lever | Score | Why |")
