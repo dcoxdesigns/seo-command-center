@@ -15,17 +15,24 @@ keyword isn't actually a query a person would type or ask]
 [2-3 sentences: overall state of the page, the single biggest opportunity, and the
 single biggest risk if nothing changes. Lead with the finding, not a warm-up.]
 
+**SEO Intent Score:** [0-100] | **GEO Score:** [0-100]
+*(Reported separately, not blended — a page can be strong on one and weak on the other.
+Each is the average of its five 0-10 item scores below, scaled to 100.)*
+
 ---
 
 ## SEO Intent Match
 
 | Item | Score | Why |
 |---|---|---|
-| Intent Match | Pass / Needs Work / Fail | [does the page answer the actual question behind the query, not just contain the keyword?] |
-| Subtopic Coverage | Pass / Needs Work / Fail | [are the must-cover subtopics for this query actually present?] |
-| Answer Extractability | Pass / Needs Work / Fail | [can a reader get the answer above the fold?] |
-| Title/Meta/H1 Alignment | Pass / Needs Work / Fail | [do title, meta, and H1 all match the query?] |
-| Technical/Schema Health | Pass / Needs Work / Fail | [is appropriate schema present, and does it actually parse?] |
+| Intent Match | [0-10] (Pass / Needs Work / Fail) | [does the page answer the actual question behind the query, not just contain the keyword?] |
+| Subtopic Coverage | [0-10] (Pass / Needs Work / Fail) | [are the must-cover subtopics for this query actually present?] |
+| Answer Extractability | [0-10] (Pass / Needs Work / Fail) | [can a reader get the answer above the fold?] |
+| Title/Meta/H1 Alignment | [0-10] (Pass / Needs Work / Fail) | [do title, meta, and H1 all match the query?] |
+| Technical/Schema Health | [0-10] (Pass / Needs Work / Fail) | [is appropriate schema present, and does it actually parse?] |
+
+*Score is 0-10, the source of truth — Pass (8-10) / Needs Work (4-7) / Fail (0-3) is
+a derived label, not a second independent judgment call.*
 
 ---
 
@@ -33,11 +40,11 @@ single biggest risk if nothing changes. Lead with the finding, not a warm-up.]
 
 | Lever | Score | Why |
 |---|---|---|
-| Citability | Pass / Needs Work / Fail | [one line] |
-| Conversational Alignment | Pass / Needs Work / Fail | [one line] |
-| Authority Signals | Pass / Needs Work / Fail | [one line] |
-| Factual Density | Pass / Needs Work / Fail | [one line] |
-| Structured Clarity | Pass / Needs Work / Fail | [one line] |
+| Citability | [0-10] (Pass / Needs Work / Fail) | [one line] |
+| Conversational Alignment | [0-10] (Pass / Needs Work / Fail) | [one line] |
+| Authority Signals | [0-10] (Pass / Needs Work / Fail) | [one line] |
+| Factual Density | [0-10] (Pass / Needs Work / Fail) | [one line] |
+| Structured Clarity | [0-10] (Pass / Needs Work / Fail) | [one line] |
 
 ---
 

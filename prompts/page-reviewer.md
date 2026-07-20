@@ -17,10 +17,14 @@ This is the core deliverable workflow — run this whenever the request is "revi
    Decision). Infer these from the page content and client-facts.md — don't guess generically.
 3. **Score SEO intent match**: Intent Match, Subtopic Coverage, Answer Extractability,
    Title/Meta/H1 Alignment (against the query, not just each other), Technical/Schema
-   Health. Each gets: Pass / Needs Work / Fail, with a one-line reason.
+   Health. Each gets a 0-10 score (9-10 exceptional, 7-8 Pass, 4-6 Needs Work, 1-3 Fail,
+   0 absent — use the full range, don't cluster at 6-8 to seem fair) with a one-line
+   reason. Average the five scores and scale to 100 for the section's composite
+   **SEO Intent Score**.
 4. **Score against all five GEO levers** from `config/five-lever-framework.md`:
    Citability, Conversational Alignment, Authority Signals, Factual Density,
-   Structured Clarity. Each gets: Pass / Needs Work / Fail, with a one-line reason.
+   Structured Clarity. Same 0-10 scale as step 3, same composite math, giving the
+   **GEO Score**. Report both scores side by side — never blend them into one number.
 5. **Check against client-facts.md** — flag anything on the page that contradicts a known
    fact, an off-limits claim, or the client's brand voice guidance.
 6. **Write prioritized fixes**, split into two lists:

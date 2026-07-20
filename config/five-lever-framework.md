@@ -80,7 +80,11 @@ fix heading hierarchy gaps.
 ---
 
 ## Using this framework
-- Every full page review scores all five levers (pass/needs-work/fail).
+- Every full page review scores all five levers 0-10 (9-10 exceptional, 7-8 Pass, 4-6
+  Needs Work, 1-3 Fail, 0 absent) — the number is the source of truth, Pass/Needs
+  Work/Fail is a label derived from it, not a separate judgment call. Average the five
+  scores and scale to 100 for the page's composite GEO Score, reported alongside (not
+  blended into) the SEO Intent Score from `prompts/page-reviewer.md` step 3.
 - Self-serve fixes (copy, headers, structure) vs. dev/IT fixes (schema implementation,
   technical markup) get split clearly in any client-facing report.
 - This file is shared across all clients. Client-specific tone, examples, and constraints

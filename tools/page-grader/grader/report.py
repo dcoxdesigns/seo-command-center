@@ -6,6 +6,8 @@ straight into tools/report-to-html/render.py for a client-facing HTML copy.
 
 import datetime
 
+from .scoring import composite_score, score_label
+
 LEVER_LABELS = {
     "citability": "Citability",
     "conversational_alignment": "Conversational Alignment",
@@ -87,6 +89,14 @@ def build_markdown(*, page_name, client_name, ai_result, structural_facts, linki
     lines.append("## Summary")
     lines.append(ai_result.get("summary", "").strip())
     lines.append("")
+    seo_intent = ai_result.get("seo_intent", {})
+    levers = ai_result.get("levers", {})
+    seo_score = composite_score(seo_intent, SEO_INTENT_ORDER)
+    geo_score = composite_score(levers, LEVER_ORDER)
+    lines.append(f"**SEO Intent Score:** {seo_score if seo_score is not None else 'N/A'}/100 &nbsp;|&nbsp; "
+                 f"**GEO Score:** {geo_score if geo_score is not None else 'N/A'}/100")
+    lines.append("*(Reported separately, not blended — a page can be strong on one and weak on the other.)*")
+    lines.append("")
     lines.append("---")
     lines.append("")
     lines.append("## SEO Intent Match")
@@ -94,8 +104,9 @@ def build_markdown(*, page_name, client_name, ai_result, structural_facts, linki
     lines.append("| Item | Score | Why |")
     lines.append("|---|---|---|")
     for key in SEO_INTENT_ORDER:
-        entry = ai_result.get("seo_intent", {}).get(key, {})
-        lines.append(f"| {SEO_INTENT_LABELS[key]} | {entry.get('score', 'N/A')} | {entry.get('why', '')} |")
+        entry = seo_intent.get(key, {})
+        score = entry.get("score")
+        lines.append(f"| {SEO_INTENT_LABELS[key]} | {score if score is not None else 'N/A'}/10 ({score_label(score)}) | {entry.get('why', '')} |")
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -108,8 +119,9 @@ def build_markdown(*, page_name, client_name, ai_result, structural_facts, linki
     lines.append("| Lever | Score | Why |")
     lines.append("|---|---|---|")
     for key in LEVER_ORDER:
-        entry = ai_result.get("levers", {}).get(key, {})
-        lines.append(f"| {LEVER_LABELS[key]} | {entry.get('score', 'N/A')} | {entry.get('why', '')} |")
+        entry = levers.get(key, {})
+        score = entry.get("score")
+        lines.append(f"| {LEVER_LABELS[key]} | {score if score is not None else 'N/A'}/10 ({score_label(score)}) | {entry.get('why', '')} |")
     lines.append("")
     lines.append("---")
     lines.append("")

@@ -35,19 +35,19 @@ after, matching exactly this shape:
     "funnel_stage": "Awareness|Consideration|Decision"
   },
   "seo_intent": {
-    "intent_match": {"score": "Pass|Needs Work|Fail", "why": "does the page answer the actual question behind the query, not just contain the keyword?"},
-    "subtopic_coverage": {"score": "Pass|Needs Work|Fail", "why": "are the must-cover subtopics for this query actually present?"},
-    "answer_extractability": {"score": "Pass|Needs Work|Fail", "why": "can a reader get the answer above the fold, without scrolling past a hero or company history?"},
-    "title_meta_h1_alignment": {"score": "Pass|Needs Work|Fail", "why": "do title, meta, and H1 all match the QUERY (not just each other)?"},
-    "technical_schema_health": {"score": "Pass|Needs Work|Fail", "why": "ground this in the structural facts already given (schema_types_found, jsonld_parse_errors) — don't re-guess what's already verified"}
+    "intent_match": {"score": 0-10, "why": "does the page answer the actual question behind the query, not just contain the keyword?"},
+    "subtopic_coverage": {"score": 0-10, "why": "are the must-cover subtopics for this query actually present?"},
+    "answer_extractability": {"score": 0-10, "why": "can a reader get the answer above the fold, without scrolling past a hero or company history?"},
+    "title_meta_h1_alignment": {"score": 0-10, "why": "do title, meta, and H1 all match the QUERY (not just each other)?"},
+    "technical_schema_health": {"score": 0-10, "why": "ground this in the structural facts already given (schema_types_found, jsonld_parse_errors) — don't re-guess what's already verified"}
   },
   "summary": "2-3 sentences: overall state, the single biggest opportunity, the single biggest risk if nothing changes",
   "levers": {
-    "citability": {"score": "Pass|Needs Work|Fail", "why": "one line"},
-    "conversational_alignment": {"score": "Pass|Needs Work|Fail", "why": "one line"},
-    "authority_signals": {"score": "Pass|Needs Work|Fail", "why": "one line"},
-    "factual_density": {"score": "Pass|Needs Work|Fail", "why": "one line"},
-    "structured_clarity": {"score": "Pass|Needs Work|Fail", "why": "one line"}
+    "citability": {"score": 0-10, "why": "one line"},
+    "conversational_alignment": {"score": 0-10, "why": "one line"},
+    "authority_signals": {"score": 0-10, "why": "one line"},
+    "factual_density": {"score": 0-10, "why": "one line"},
+    "structured_clarity": {"score": 0-10, "why": "one line"}
   },
   "fixes_self_serve": ["fix 1", "fix 2"],
   "fixes_dev": ["fix 1"],
@@ -64,6 +64,18 @@ after, matching exactly this shape:
   "prioritize_first": "1-2 sentences"
 }
 
+Every "score" field is an integer 0-10, not a bucket label — this is the
+source of truth a Pass/Needs Work/Fail label and a composite /100 score both
+get derived from later, so calibrate it for real, don't just pick 7 for
+everything to be safe:
+- 9-10: exceptional, nothing meaningful left to improve.
+- 7-8: solid, clears the bar (this is what "Pass" means).
+- 4-6: workable but has real, specific gaps ("Needs Work").
+- 1-3: fails to do the job ("Fail").
+- 0: not attempted / entirely absent.
+Use the full range. A page doesn't need to cluster at 6-8 to be a valid
+review — if something is genuinely a 9 or genuinely a 2, say so.
+
 Use null for "suggested" in two cases: (1) the current page doesn't give you
 enough to write a real rewrite — do not invent one, or (2) the current
 version is already strong and doesn't need a rewrite. Never repeat the
@@ -79,8 +91,9 @@ Guardrails, same as this repo's page-reviewer.md workflow:
   page content or the client facts below. If a rewrite would need a real
   number you don't have (price, weight, dimension, date), say so in the
   "why" or leave the field null instead of inventing one.
-- Score honestly. A page doesn't need five failures to be a valid review —
-  if something genuinely passes, say Pass.
+- Score honestly across the full 0-10 range — a page doesn't need low scores
+  everywhere to be a valid review, and it doesn't need to cluster in the
+  middle to seem fair.
 - Target query, persona, and funnel stage are inferred from the actual page
   content (and client facts, if given) — not a generic guess. If the page
   genuinely doesn't make its target audience or query clear, say that
