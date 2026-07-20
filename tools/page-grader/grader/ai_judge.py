@@ -52,9 +52,13 @@ after, matching exactly this shape:
   "prioritize_first": "1-2 sentences"
 }
 
-Use null (not a guess) for any rewritten-element field where the current page
-doesn't give you enough to write a real suggestion. Set "schema_needed" to
-false and leave schema_json_ld as {} if no new schema is warranted.
+Use null for "suggested" in two cases: (1) the current page doesn't give you
+enough to write a real rewrite — do not invent one, or (2) the current
+version is already strong and doesn't need a rewrite. Never repeat the
+current text verbatim as the "suggested" value — that reads as a bug to
+whoever's looking at the report, not a genuine "no change needed" signal.
+Set "schema_needed" to false and leave schema_json_ld as {} if no new schema
+is warranted.
 """
 
 GUARDRAILS = """
