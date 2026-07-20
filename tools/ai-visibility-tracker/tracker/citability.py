@@ -38,22 +38,50 @@ def band(score):
 
 
 def index_from_rows(rows):
-    """rows: iterable of objects with .mentioned / .cited (or dict-like with those keys)."""
+    """rows: iterable of objects with .mentioned / .cited / .recommendation_status
+    (or dict-like with those keys). Recommendation Rate is reported alongside the
+    Citability Index, not blended into its 0-100 formula (see
+    ci-recommendation-rate-addendum.md) — it answers a different question:
+    citation/mention count whether the brand was named, Recommendation Rate
+    counts whether the AI actually endorsed it over the alternatives."""
     rows = list(rows)
     total = len(rows)
     if total == 0:
-        return {"mention_rate": 0.0, "citation_rate": 0.0, "citability_index": 0.0, "n": 0}
+        return {"mention_rate": 0.0, "citation_rate": 0.0, "recommendation_rate": 0.0, "citability_index": 0.0, "n": 0}
     mentioned = sum(1 for r in rows if r["mentioned"])
     cited = sum(1 for r in rows if r["cited"])
+    recommended = sum(1 for r in rows if r["recommendation_status"] == "recommended")
     mention_rate = mentioned / total
     citation_rate = cited / total
+    recommendation_rate = recommended / total
     citability_index = round((mention_rate * 40) + (citation_rate * 60), 1)
     return {
         "mention_rate": round(mention_rate, 3),
         "citation_rate": round(citation_rate, 3),
+        "recommendation_rate": round(recommendation_rate, 3),
         "citability_index": citability_index,
         "n": total,
     }
+
+
+def recommendation_gaps(conn, client, timestamp):
+    """Distinct (prompt, platform) pairs where the client was mentioned but not
+    recommended — the most client-actionable finding this addendum adds: present
+    in the answer, but losing the explicit pick to something else. Excludes rows
+    that couldn't be classified (no ANTHROPIC_API_KEY set at run time), since
+    those are unknown, not confirmed gaps."""
+    rows = db.rows_for_run(conn, client, timestamp)
+    seen = set()
+    gaps = []
+    for row in rows:
+        if row["recommendation_status"] != "present":
+            continue
+        key = (row["prompt"], row["platform"])
+        if key in seen:
+            continue
+        seen.add(key)
+        gaps.append({"prompt": row["prompt"], "platform": row["platform"]})
+    return gaps
 
 
 def client_report_for_run(conn, client, timestamp, platforms):

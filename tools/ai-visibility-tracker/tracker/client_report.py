@@ -62,6 +62,7 @@ def _gather(client_slug):
 
     top_domains = competitors.top_competing_domains(conn, cfg.client, latest["timestamp"], cfg.domain)
     matrix = db.prompt_matrix(conn, cfg.client, latest["timestamp"])
+    rec_gaps = citability.recommendation_gaps(conn, cfg.client, latest["timestamp"])
     conn.close()
 
     band = latest["band"]
@@ -74,6 +75,7 @@ def _gather(client_slug):
         "delta": delta,
         "top_domains": top_domains,
         "matrix": matrix,
+        "rec_gaps": rec_gaps,
         "blended": latest["blended"],
         "band": band,
         "band_desc": citability.BAND_DESCRIPTIONS.get(band, ""),
@@ -121,18 +123,24 @@ def _render_markdown(data):
     lines.append("")
     lines.append(f"**Blended: {blended['citability_index']} ({band})**")
     lines.append("")
-    lines.append("| Platform | Citability Index | Mention Rate | Citation Rate | Prompts Tested |")
-    lines.append("|---|---|---|---|---|")
+    lines.append("| Platform | Citability Index | Mention Rate | Citation Rate | Recommendation Rate | Prompts Tested |")
+    lines.append("|---|---|---|---|---|---|")
     for platform in PLATFORM_NAMES:
         idx = data["latest"]["per_platform"][platform]
         label = PLATFORM_LABELS[platform]
         if idx["n"] == 0:
-            lines.append(f"| {label} | — | — | — | not tested (no API key set) |")
+            lines.append(f"| {label} | — | — | — | — | not tested (no API key set) |")
         else:
             lines.append(
                 f"| {label} | {idx['citability_index']} | {idx['mention_rate']*100:.0f}% "
-                f"| {idx['citation_rate']*100:.0f}% | {idx['n']} |"
+                f"| {idx['citation_rate']*100:.0f}% | {idx['recommendation_rate']*100:.0f}% | {idx['n']} |"
             )
+    lines.append("")
+    lines.append(
+        "*Recommendation Rate is reported alongside the Citability Index, not blended into it — "
+        "it measures how often the AI singled the brand out as the pick, not just named it "
+        "alongside others.*"
+    )
     lines.append("")
     if data["previous"] is not None:
         arrow = "up" if data["delta"] > 0 else ("down" if data["delta"] < 0 else "flat")
@@ -155,6 +163,24 @@ def _render_markdown(data):
             lines.append(f"| {d['domain']} | {d['count']} | “{d['example_prompt']}” |")
     else:
         lines.append(f"No competing domains were cited across {cfg.client}'s tracked prompts this run.")
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+
+    lines.append("## Recommendation Gaps")
+    if data["rec_gaps"]:
+        lines.append(
+            f"*(Prompts where {cfg.client} was named or cited but not the AI's explicit pick — "
+            f"the most actionable finding here: present in the answer, losing the recommendation.)*"
+        )
+        lines.append("")
+        lines.append("| Prompt | Platform |")
+        lines.append("|---|---|")
+        for gap in data["rec_gaps"]:
+            lines.append(f"| {gap['prompt']} | {PLATFORM_LABELS.get(gap['platform'], gap['platform'])} |")
+    else:
+        lines.append(f"No gap cases this run — every prompt where {cfg.client} appeared, it was also the "
+                      f"recommendation (or no responses were classified).")
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -285,20 +311,23 @@ def _render_html(data):
 
     parts.append("<h2>Citability Index by Platform</h2>")
     parts.append("<table><tr><th>Platform</th><th>Citability Index</th><th>Mention Rate</th>"
-                  "<th>Citation Rate</th><th>Prompts Tested</th></tr>")
+                  "<th>Citation Rate</th><th>Recommendation Rate</th><th>Prompts Tested</th></tr>")
     for platform in PLATFORM_NAMES:
         idx = data["latest"]["per_platform"][platform]
         label = PLATFORM_LABELS[platform]
         if idx["n"] == 0:
-            parts.append(f"<tr><td>{_e(label)}</td><td>—</td><td>—</td><td>—</td>"
+            parts.append(f"<tr><td>{_e(label)}</td><td>—</td><td>—</td><td>—</td><td>—</td>"
                           f"<td>not tested (no API key set)</td></tr>")
         else:
             parts.append(
                 f"<tr><td>{_e(label)}</td><td>{idx['citability_index']}</td>"
                 f"<td>{idx['mention_rate']*100:.0f}%</td><td>{idx['citation_rate']*100:.0f}%</td>"
-                f"<td>{idx['n']}</td></tr>"
+                f"<td>{idx['recommendation_rate']*100:.0f}%</td><td>{idx['n']}</td></tr>"
             )
     parts.append("</table>")
+    parts.append("<p class='note'>Recommendation Rate is reported alongside the Citability Index, not "
+                  "blended into it — it measures how often the AI singled the brand out as the pick, not "
+                  "just named it alongside others.</p>")
     if data["previous"] is not None:
         arrow = "up" if data["delta"] > 0 else ("down" if data["delta"] < 0 else "flat")
         cls = " class='trend-flagged'" if data["flagged"] else ""
@@ -319,6 +348,20 @@ def _render_html(data):
         parts.append("</table>")
     else:
         parts.append(f"<p>No competing domains were cited across {_e(cfg.client)}'s tracked prompts this run.</p>")
+
+    parts.append("<h2>Recommendation Gaps</h2>")
+    if data["rec_gaps"]:
+        parts.append(f"<p class='note'>Prompts where {_e(cfg.client)} was named or cited but not the AI's "
+                      f"explicit pick — the most actionable finding here: present in the answer, losing the "
+                      f"recommendation.</p>")
+        parts.append("<table><tr><th>Prompt</th><th>Platform</th></tr>")
+        for gap in data["rec_gaps"]:
+            parts.append(f"<tr><td>{_e(gap['prompt'])}</td>"
+                          f"<td>{_e(PLATFORM_LABELS.get(gap['platform'], gap['platform']))}</td></tr>")
+        parts.append("</table>")
+    else:
+        parts.append(f"<p>No gap cases this run — every prompt where {_e(cfg.client)} appeared, it was also "
+                      f"the recommendation (or no responses were classified).</p>")
 
     parts.append("<h2>Prompts Tracked</h2>")
     parts.append(f"<p class='note'>Each prompt is run {REPLICATES_PER_PROMPT} times per platform per report — "

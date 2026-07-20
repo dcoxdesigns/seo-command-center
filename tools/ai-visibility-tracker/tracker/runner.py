@@ -14,7 +14,7 @@ import re
 import sys
 import time
 
-from . import citability, db, detection
+from . import citability, db, detection, recommendation
 from .config import load_all_client_configs, load_client_config
 from .platforms import ALL as ALL_PLATFORMS
 
@@ -82,6 +82,11 @@ def run(client_slugs=None, dry_run=True):
         print("Re-run with --run to execute.")
         return
 
+    anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not anthropic_key:
+        print("[warn] ANTHROPIC_API_KEY not set — Recommendation Rate classification will be "
+              "skipped for mentioned responses (stored as unclassified, not counted as recommended).\n")
+
     run_timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
     conn = db.connect()
     print(f"Run started {run_timestamp} — {total_calls} calls planned.\n")
@@ -120,6 +125,20 @@ def run(client_slugs=None, dry_run=True):
                     matched_citations = detection.cited_urls(response.citation_urls, cfg.domain)
                     cited = len(matched_citations) > 0
 
+                    # Unmentioned responses are trivially "absent" — no LLM call needed.
+                    # Only classify the (usually much smaller) subset that actually named
+                    # the client, to keep the added cost proportional to the hit rate.
+                    if not mentioned:
+                        recommendation_status = "absent"
+                    elif anthropic_key:
+                        try:
+                            recommendation_status = recommendation.classify(prompt, response.text, cfg.client, anthropic_key)
+                        except Exception as e:
+                            print(f"    [warn] recommendation classification failed: {e}")
+                            recommendation_status = None
+                    else:
+                        recommendation_status = None
+
                     db.insert_run(
                         conn,
                         client=cfg.client,
@@ -129,13 +148,17 @@ def run(client_slugs=None, dry_run=True):
                         replicate=replicate,
                         mentioned=mentioned,
                         cited=cited,
+                        recommendation_status=recommendation_status,
                         # store every citation URL returned, not just the ones matching
                         # this client — competitors.py needs the full list to show who
                         # got cited instead when this client didn't.
                         citation_urls=response.citation_urls,
                         raw_response_path=raw_path,
                     )
-                    results.append("CITED" if cited else ("mentioned" if mentioned else "-"))
+                    tag = "CITED" if cited else ("mentioned" if mentioned else "-")
+                    if recommendation_status == "recommended":
+                        tag += "+REC"
+                    results.append(tag)
                     time.sleep(SLEEP_BETWEEN_CALLS_SECONDS)
 
                 print(f"  {platform.NAME:12} {'/'.join(results):17} {prompt[:60]}")

@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS runs (
     replicate INTEGER NOT NULL DEFAULT 1,
     mentioned INTEGER NOT NULL,
     cited INTEGER NOT NULL,
+    recommendation_status TEXT,
     citation_urls TEXT,
     raw_response_path TEXT
 );
@@ -49,23 +50,28 @@ def connect():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
-    # Self-migrate DBs created before the `replicate` column existed.
-    try:
-        conn.execute("ALTER TABLE runs ADD COLUMN replicate INTEGER NOT NULL DEFAULT 1")
-        conn.commit()
-    except sqlite3.OperationalError:
-        pass  # column already exists
+    # Self-migrate DBs created before these columns existed.
+    for migration in (
+        "ALTER TABLE runs ADD COLUMN replicate INTEGER NOT NULL DEFAULT 1",
+        "ALTER TABLE runs ADD COLUMN recommendation_status TEXT",
+    ):
+        try:
+            conn.execute(migration)
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass  # column already exists
     return conn
 
 
 def insert_run(conn, *, client, platform, prompt, timestamp, replicate, mentioned, cited,
-                citation_urls, raw_response_path):
+                recommendation_status, citation_urls, raw_response_path):
     conn.execute(
         """INSERT INTO runs
-           (client, platform, prompt, timestamp, replicate, mentioned, cited, citation_urls, raw_response_path)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+           (client, platform, prompt, timestamp, replicate, mentioned, cited, recommendation_status,
+            citation_urls, raw_response_path)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (client, platform, prompt, timestamp, replicate, int(mentioned), int(cited),
-         json.dumps(citation_urls or []), raw_response_path),
+         recommendation_status, json.dumps(citation_urls or []), raw_response_path),
     )
     conn.commit()
 
