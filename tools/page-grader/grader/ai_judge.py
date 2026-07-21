@@ -85,6 +85,30 @@ Set "schema_needed" to false and leave schema_json_ld as {} if no new schema
 is warranted.
 """
 
+REGRADE_SCHEMA_NOTE = """
+A previous review of this exact page is provided below. Also include this key
+in your JSON response, at the top level, alongside everything above:
+
+"regrade": {
+  "fixes_status": [
+    {"fix": "the exact fix text from the previous review", "status": "shipped|partial|not_shipped", "note": "one line — what you actually see on the page now, specific enough to prove you checked"}
+  ]
+}
+
+Check the CURRENT page content (given below) against each fix the previous
+review recommended — both fixes_self_serve and fixes_dev from the previous
+review, combined into one fixes_status list. Verify against what's actually
+on the page now, not against what was recommended — don't assume a fix
+shipped just because it would be reasonable for it to have shipped.
+- "shipped": the fix is fully present as recommended.
+- "partial": something changed in the right direction but doesn't fully
+  match what was recommended (e.g. a title was rewritten but exceeds the
+  suggested length, or only some of a multi-part fix landed).
+- "not_shipped": no evidence the fix was made.
+Don't assume uniform outcomes — a real batch of fixes usually has some of
+each status, not all-or-nothing.
+"""
+
 GUARDRAILS = """
 Guardrails, same as this repo's page-reviewer.md workflow:
 - Never invent a competitor claim, statistic, spec, or fact that isn't in the
@@ -102,7 +126,7 @@ Guardrails, same as this repo's page-reviewer.md workflow:
 """
 
 
-def build_prompt(page_text, structural_facts, client_slug=None, target_query=None):
+def build_prompt(page_text, structural_facts, client_slug=None, target_query=None, previous_review=None):
     parts = [
         "You are running Small Factory 5's page review workflow — both the SEO intent-match "
         "scorecard and the five-lever GEO framework — exactly as a human reviewer would.",
@@ -135,6 +159,19 @@ def build_prompt(page_text, structural_facts, client_slug=None, target_query=Non
             "to win from the page content itself, and score seo_intent against that inferred query.",
         ]
 
+    if previous_review:
+        old = previous_review.get("ai_result", {})
+        old_fixes = (old.get("fixes_self_serve") or []) + (old.get("fixes_dev") or [])
+        parts += [
+            "",
+            f"## Previous review of this exact page ({previous_review.get('date', 'unknown date')})",
+            f"Previous SEO Intent items: {json.dumps(old.get('seo_intent', {}))}",
+            f"Previous GEO lever items: {json.dumps(old.get('levers', {}))}",
+            f"Previous recommended fixes: {json.dumps(old_fixes)}",
+            "This is a re-grade — check the current page against each previous fix and report "
+            "the regrade field per the instructions below.",
+        ]
+
     parts += [
         "",
         "## Structural facts already verified by direct HTML parsing (ground truth — don't re-guess these)",
@@ -158,12 +195,14 @@ def build_prompt(page_text, structural_facts, client_slug=None, target_query=Non
         GUARDRAILS,
         RESPONSE_SCHEMA_NOTE,
     ]
+    if previous_review:
+        parts.append(REGRADE_SCHEMA_NOTE)
     return "\n".join(parts)
 
 
-def score_page(page_text, structural_facts, client_slug=None, api_key=None, target_query=None):
+def score_page(page_text, structural_facts, client_slug=None, api_key=None, target_query=None, previous_review=None):
     api_key = api_key or os.environ["ANTHROPIC_API_KEY"]
-    prompt = build_prompt(page_text, structural_facts, client_slug, target_query)
+    prompt = build_prompt(page_text, structural_facts, client_slug, target_query, previous_review)
 
     body = {
         "model": MODEL,

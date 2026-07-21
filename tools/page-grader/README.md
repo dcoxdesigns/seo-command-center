@@ -30,6 +30,18 @@ Density, Structured Clarity.
   gap" only when inlink data is available to actually check) and outbound
   opportunities (anchor text that already appears verbatim in the page's own
   copy — never invented). Silently skipped if no crawl export exists.
+- **Scoring** (`grader/scoring.py`) — every SEO-intent item and GEO lever is
+  scored 0-10 by the AI (the source of truth), with a Pass/Needs Work/Fail
+  label derived from it rather than chosen separately. Each scorecard's five
+  items average into a composite **SEO Intent Score** and **GEO Score**,
+  0-100 each, reported side by side and never blended into one number.
+- **Re-grade** (`grader/regrade.py`) — if this exact URL was reviewed before
+  for this client, a fresh review automatically becomes a re-grade: real
+  score deltas (old → new, both scorecards) plus a per-fix
+  shipped/partial/not-shipped status, checked against the live page as it is
+  now, not assumed from what was recommended. Matched by exact URL, so this
+  only triggers for `--url` runs — `--file`/`--text` have no stable identity
+  to diff against.
 
 The prompt is built from `config/five-lever-framework.md` and
 `config/brand-voice.md` **read at runtime**, not copied into this tool's
@@ -66,6 +78,10 @@ instead of just topical candidates), the report also gets an Internal
 Linking section, computed from the real crawl, not guessed. No export?
 No section — silently skipped, no error. Free tier of Screaming Frog
 covers sites under 500 URLs; a license is needed above that.
+
+Re-running `--url` for the same client+page automatically re-grades against
+the last review of that exact URL — no flag needed, it just finds the prior
+`clients/<slug>/reports/*.json` sidecar and diffs against it.
 
 Always dry-runs by default — same safety pattern as every other tool in this
 repo that spends real API money. One review is one Claude API call, roughly

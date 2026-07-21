@@ -4,10 +4,11 @@ Dry-run by default — this makes one real API call to Claude per review, and
 an accidental invocation shouldn't spend money without an explicit --run.
 """
 
+import datetime
 import os
 import re
 
-from . import ai_judge, config_docs, crawl, fetch, report, structural
+from . import ai_judge, config_docs, crawl, fetch, regrade, report, structural
 
 CLIENTS_DIR = config_docs.CLIENTS_DIR
 
@@ -55,8 +56,16 @@ def review(*, url=None, file=None, text=None, client=None, page_name=None, targe
     print(f"  Images: {facts['total_images']} ({facts['images_missing_alt']} missing alt)  "
           f"|  Word count: {facts['word_count']}")
 
+    previous_review = None
+    if client and url:
+        previous_review = regrade.find_previous_review(client, CLIENTS_DIR, url)
+        if previous_review:
+            print(f"  Found a previous review of this page from {previous_review.get('date')} — re-grading against it.")
+
     print("Calling Claude to score SEO intent match and the five GEO levers...")
-    ai_result, raw = ai_judge.score_page(page_text, facts, client_slug=client, target_query=target_query)
+    ai_result, raw = ai_judge.score_page(
+        page_text, facts, client_slug=client, target_query=target_query, previous_review=previous_review
+    )
 
     linking = None
     if client:
@@ -77,18 +86,23 @@ def review(*, url=None, file=None, text=None, client=None, page_name=None, targe
         ai_result=ai_result,
         structural_facts=facts,
         linking=linking,
+        previous_review=previous_review,
     )
 
     saved_path = None
     if client:
         reports_dir = os.path.join(CLIENTS_DIR, client, "reports")
         os.makedirs(reports_dir, exist_ok=True)
-        import datetime
         today = datetime.date.today().isoformat()
         saved_path = os.path.join(reports_dir, f"{today}-page-review-{_slugify(resolved_page_name)}.md")
         with open(saved_path, "w", encoding="utf-8") as f:
             f.write(markdown)
         print(f"Saved: {saved_path}")
+        if url:
+            sidecar_path = regrade.save_sidecar(
+                client, CLIENTS_DIR, url=url, page_name=resolved_page_name, date=today, ai_result=ai_result
+            )
+            print(f"Saved re-grade record: {sidecar_path}")
     else:
         print("\nNo --client given — printing instead of saving:\n")
         print(markdown)

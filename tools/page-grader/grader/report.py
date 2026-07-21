@@ -70,7 +70,34 @@ def _linking_section(linking):
     return lines
 
 
-def build_markdown(*, page_name, client_name, ai_result, structural_facts, linking=None):
+def _regrade_section(previous_review, ai_result, seo_score, geo_score):
+    old = previous_review.get("ai_result", {})
+    old_seo = composite_score(old.get("seo_intent", {}), SEO_INTENT_ORDER)
+    old_geo = composite_score(old.get("levers", {}), LEVER_ORDER)
+
+    lines = ["## Re-Grade", "", f"*Compared against the review from {previous_review.get('date', 'an earlier date')}.*", ""]
+
+    def _delta_line(label, old_val, new_val):
+        if old_val is None or new_val is None:
+            return f"**{label}:** N/A"
+        return f"**{label}:** {old_val} → {new_val} ({new_val - old_val:+d})"
+
+    lines.append(_delta_line("SEO Intent Score", old_seo, seo_score) + " &nbsp;|&nbsp; " + _delta_line("GEO Score", old_geo, geo_score))
+    lines.append("")
+
+    fixes_status = (ai_result.get("regrade") or {}).get("fixes_status") or []
+    if fixes_status:
+        lines.append("| Fix (from previous review) | Status | Note |")
+        lines.append("|---|---|---|")
+        for f in fixes_status:
+            status = (f.get("status") or "").replace("_", " ").title()
+            lines.append(f"| {f.get('fix', '')} | {status} | {f.get('note', '')} |")
+    else:
+        lines.append("No per-fix status returned — verify shipped changes manually against the previous fix list.")
+    return lines
+
+
+def build_markdown(*, page_name, client_name, ai_result, structural_facts, linking=None, previous_review=None):
     today = datetime.date.today().isoformat()
     lines = []
     lines.append(f"# Page Review — {page_name}")
@@ -99,6 +126,11 @@ def build_markdown(*, page_name, client_name, ai_result, structural_facts, linki
     lines.append("")
     lines.append("---")
     lines.append("")
+    if previous_review is not None:
+        lines.extend(_regrade_section(previous_review, ai_result, seo_score, geo_score))
+        lines.append("")
+        lines.append("---")
+        lines.append("")
     lines.append("## SEO Intent Match")
     lines.append("")
     lines.append("| Item | Score | Why |")
